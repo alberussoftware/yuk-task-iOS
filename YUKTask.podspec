@@ -19,5 +19,5 @@ Pod::Spec.new do |s|
   s.swift_version         = '5.3'
   s.source_files          = 'Sources/YUKTask/**/*'
   s.frameworks            = 'Foundation'
-  s.dependency              'YUKTest'
+  s.dependency              'YUKLock'
 end
