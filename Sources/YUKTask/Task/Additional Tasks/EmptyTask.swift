@@ -1,6 +1,6 @@
 //
 //  EmptyTask.swift
-//  PSTask
+//  YUKTask
 //
 //  Created by Ruslan Lutfullin on 1/30/20.
 //

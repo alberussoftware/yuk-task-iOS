@@ -1,6 +1,6 @@
 //
 //  GroupProducerTask.swift
-//  PSTask
+//  YUKTask
 //
 //  Created by Ruslan Lutfullin on 1/5/20.
 //
@@ -68,7 +68,7 @@ open class GroupProducerTask<Output, Failure: Error>: ProducerTask<Output, Failu
     tasks: (T1)
   ) {
     self.innerQueue = .init(
-      name: "com.pstask.\(String(describing: Self.self))-inner",
+      name: "\(Bundle.main.bundleIdentifier!).\(String(describing: Self.self)).inner",
       qos: qos,
       underlyingQueue: underlyingQueue,
       startSuspended: true
@@ -87,7 +87,7 @@ open class GroupProducerTask<Output, Failure: Error>: ProducerTask<Output, Failu
     tasks: (T1, T2)
   ) {
     self.innerQueue = .init(
-      name: "com.pstask.\(String(describing: Self.self))-inner",
+      name: "\(Bundle.main.bundleIdentifier!).\(String(describing: Self.self)).inner",
       qos: qos,
       underlyingQueue: underlyingQueue,
       startSuspended: true
@@ -107,7 +107,7 @@ open class GroupProducerTask<Output, Failure: Error>: ProducerTask<Output, Failu
     tasks: (T1, T2, T3)
   ) {
     self.innerQueue = .init(
-      name: "com.pstask.\(String(describing: Self.self))-inner",
+      name: "\(Bundle.main.bundleIdentifier!).\(String(describing: Self.self)).inner",
       qos: qos,
       underlyingQueue: underlyingQueue,
       startSuspended: true
@@ -128,7 +128,7 @@ open class GroupProducerTask<Output, Failure: Error>: ProducerTask<Output, Failu
     tasks: (T1, T2, T3, T4)
   ) {
     self.innerQueue = .init(
-      name: "com.pstask.\(String(describing: Self.self))-inner",
+      name: "\(Bundle.main.bundleIdentifier!).\(String(describing: Self.self)).inner",
       qos: qos,
       underlyingQueue: underlyingQueue,
       startSuspended: true
@@ -150,7 +150,7 @@ open class GroupProducerTask<Output, Failure: Error>: ProducerTask<Output, Failu
     tasks: (T1, T2, T3, T4, T5)
   ) {
     self.innerQueue = .init(
-      name: "com.pstask.\(String(describing: Self.self))-inner",
+      name: "\(Bundle.main.bundleIdentifier!).\(String(describing: Self.self)).inner",
       qos: qos,
       underlyingQueue: underlyingQueue,
       startSuspended: true
@@ -173,7 +173,7 @@ open class GroupProducerTask<Output, Failure: Error>: ProducerTask<Output, Failu
     tasks: (T1, T2, T3, T4, T5, T6)
   ) {
     self.innerQueue = .init(
-      name: "com.pstask.\(String(describing: Self.self))-inner",
+      name: "\(Bundle.main.bundleIdentifier!).\(String(describing: Self.self)).inner",
       qos: qos,
       underlyingQueue: underlyingQueue,
       startSuspended: true
@@ -197,7 +197,7 @@ open class GroupProducerTask<Output, Failure: Error>: ProducerTask<Output, Failu
     tasks: (T1, T2, T3, T4, T5, T6, T7)
   ) {
     self.innerQueue = .init(
-      name: "com.pstask.\(String(describing: Self.self))-inner",
+      name: "\(Bundle.main.bundleIdentifier!).\(String(describing: Self.self)).inner",
       qos: qos,
       underlyingQueue: underlyingQueue,
       startSuspended: true
@@ -222,7 +222,7 @@ open class GroupProducerTask<Output, Failure: Error>: ProducerTask<Output, Failu
     tasks: (T1, T2, T3, T4, T5, T6, T7, T8)
   ) {
     self.innerQueue = .init(
-      name: "com.pstask.\(String(describing: Self.self))-inner",
+      name: "\(Bundle.main.bundleIdentifier!).\(String(describing: Self.self)).inner",
       qos: qos,
       underlyingQueue: underlyingQueue,
       startSuspended: true
@@ -248,7 +248,7 @@ open class GroupProducerTask<Output, Failure: Error>: ProducerTask<Output, Failu
     tasks: (T1, T2, T3, T4, T5, T6, T7, T8, T9)
   ) {
     self.innerQueue = .init(
-      name: "com.pstask.\(String(describing: Self.self))-inner",
+      name: "\(Bundle.main.bundleIdentifier!).\(String(describing: Self.self)).inner",
       qos: qos,
       underlyingQueue: underlyingQueue,
       startSuspended: true
@@ -275,7 +275,7 @@ open class GroupProducerTask<Output, Failure: Error>: ProducerTask<Output, Failu
     tasks: (T1, T2, T3, T4, T5, T6, T7, T8, T8, T9, T10)
   ) {
     self.innerQueue = .init(
-      name: "com.pstask.\(String(describing: Self.self))-inner",
+      name: "\(Bundle.main.bundleIdentifier!).\(String(describing: Self.self)).inner",
       qos: qos,
       underlyingQueue: underlyingQueue,
       startSuspended: true
@@ -305,7 +305,7 @@ open class GroupProducerTask<Output, Failure: Error>: ProducerTask<Output, Failu
     produced: ProducerTask<Output, Failure>
   ) {
     self.innerQueue = .init(
-      name: "com.pstask.\(String(describing: Self.self))-inner",
+      name: "\(Bundle.main.bundleIdentifier!).\(String(describing: Self.self)).inner",
       qos: qos,
       underlyingQueue: underlyingQueue,
       startSuspended: true
@@ -326,7 +326,7 @@ open class GroupProducerTask<Output, Failure: Error>: ProducerTask<Output, Failu
     produced: ProducerTask<Output, Failure>
   ) {
     self.innerQueue = .init(
-      name: "com.pstask.\(String(describing: Self.self))-inner",
+      name: "\(Bundle.main.bundleIdentifier!).\(String(describing: Self.self)).inner",
       qos: qos,
       underlyingQueue: underlyingQueue,
       startSuspended: true
@@ -348,7 +348,7 @@ open class GroupProducerTask<Output, Failure: Error>: ProducerTask<Output, Failu
     produced: ProducerTask<Output, Failure>
   ) {
     self.innerQueue = .init(
-      name: "com.pstask.\(String(describing: Self.self))-inner",
+      name: "\(Bundle.main.bundleIdentifier!).\(String(describing: Self.self)).inner",
       qos: qos,
       underlyingQueue: underlyingQueue,
       startSuspended: true
@@ -371,7 +371,7 @@ open class GroupProducerTask<Output, Failure: Error>: ProducerTask<Output, Failu
     produced: ProducerTask<Output, Failure>
   ) {
     self.innerQueue = .init(
-      name: "com.pstask.\(String(describing: Self.self))-inner",
+      name: "\(Bundle.main.bundleIdentifier!).\(String(describing: Self.self)).inner",
       qos: qos,
       underlyingQueue: underlyingQueue,
       startSuspended: true
@@ -395,7 +395,7 @@ open class GroupProducerTask<Output, Failure: Error>: ProducerTask<Output, Failu
     produced: ProducerTask<Output, Failure>
   ) {
     self.innerQueue = .init(
-      name: "com.pstask.\(String(describing: Self.self))-inner",
+      name: "\(Bundle.main.bundleIdentifier!).\(String(describing: Self.self)).inner",
       qos: qos,
       underlyingQueue: underlyingQueue,
       startSuspended: true
@@ -420,7 +420,7 @@ open class GroupProducerTask<Output, Failure: Error>: ProducerTask<Output, Failu
     produced: ProducerTask<Output, Failure>
   ) {
     self.innerQueue = .init(
-      name: "com.pstask.\(String(describing: Self.self))-inner",
+      name: "\(Bundle.main.bundleIdentifier!).\(String(describing: Self.self)).inner",
       qos: qos,
       underlyingQueue: underlyingQueue,
       startSuspended: true
@@ -446,7 +446,7 @@ open class GroupProducerTask<Output, Failure: Error>: ProducerTask<Output, Failu
     produced: ProducerTask<Output, Failure>
   ) {
     self.innerQueue = .init(
-      name: "com.pstask.\(String(describing: Self.self))-inner",
+      name: "\(Bundle.main.bundleIdentifier!).\(String(describing: Self.self)).inner",
       qos: qos,
       underlyingQueue: underlyingQueue,
       startSuspended: true
@@ -473,7 +473,7 @@ open class GroupProducerTask<Output, Failure: Error>: ProducerTask<Output, Failu
     produced: ProducerTask<Output, Failure>
   ) {
     self.innerQueue = .init(
-      name: "com.pstask.\(String(describing: Self.self))-inner",
+      name: "\(Bundle.main.bundleIdentifier!).\(String(describing: Self.self)).inner",
       qos: qos,
       underlyingQueue: underlyingQueue,
       startSuspended: true
@@ -501,7 +501,7 @@ open class GroupProducerTask<Output, Failure: Error>: ProducerTask<Output, Failu
     produced: ProducerTask<Output, Failure>
   ) {
     self.innerQueue = .init(
-      name: "com.pstask.\(String(describing: Self.self))-inner",
+      name: "\(Bundle.main.bundleIdentifier!).\(String(describing: Self.self)).inner",
       qos: qos,
       underlyingQueue: underlyingQueue,
       startSuspended: true
@@ -530,7 +530,7 @@ open class GroupProducerTask<Output, Failure: Error>: ProducerTask<Output, Failu
     produced: ProducerTask<Output, Failure>
   ) {
     self.innerQueue = .init(
-      name: "com.pstask.\(String(describing: Self.self))-inner",
+      name: "\(Bundle.main.bundleIdentifier!).\(String(describing: Self.self)).inner",
       qos: qos,
       underlyingQueue: underlyingQueue,
       startSuspended: true

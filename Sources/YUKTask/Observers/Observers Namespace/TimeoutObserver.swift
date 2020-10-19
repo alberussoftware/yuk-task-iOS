@@ -1,6 +1,6 @@
 //
 //  TimeoutObserver.swift
-//  PSTask
+//  YUKTask
 //
 //  Created by Ruslan Lutfullin on 1/19/20.
 //

@@ -1,6 +1,6 @@
 //
 //  TryCompactMapTask.swift
-//  PSTask
+//  YUKTask
 //
 //  Created by Ruslan Lutfullin on 2/2/20.
 //

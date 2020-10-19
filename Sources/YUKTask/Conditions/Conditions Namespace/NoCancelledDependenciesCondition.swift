@@ -1,6 +1,6 @@
 //
 //  NoCancelledDependenciesCondition.swift
-//  PSTask
+//  YUKTask
 //
 //  Created by Ruslan Lutfullin on 1/17/20.
 //

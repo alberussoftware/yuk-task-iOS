@@ -1,6 +1,6 @@
 //
 //  ConditionMutuallyExclusivityController.swift
-//  PSTask
+//  YUKTask
 //
 //  Created by Ruslan Lutfullin on 2/11/20.
 //
@@ -10,7 +10,7 @@ import Foundation
 internal final class _ConditionMutuallyExclusivityController {
   // MARK:
   private let manageQueue =
-    DispatchQueue(label: "com.pstask.condition-mutually-exclusivity-controller.manage", qos: .userInitiated)
+    DispatchQueue(label: "com.YUKTask.condition-mutually-exclusivity-controller.manage", qos: .userInitiated)
   
   // MARK:
   private var operations = [String: [Operation]]()
