@@ -15,7 +15,7 @@ public enum ProducerTaskSeparateError<Failure: Error>: Error {
 
 
 @available(iOS 13.0, macOS 10.15, watchOS 6.0, tvOS 13.0, macCatalyst 13.0, *)
-public protocol ProducerTaskProtocol: Operation {
+public protocol ProducerTaskProtocol: Operation, Identifiable {
   // MARK:
   associatedtype Output
   associatedtype Failure: Error

@@ -10,7 +10,7 @@ import Foundation
 @available(iOS 13.0, macOS 10.15, watchOS 6.0, tvOS 13.0, macCatalyst 13.0, *)
 extension Tasks {
 
-// TODO: - Перейти с `JSONDecoder` на `TopLevelDecoder`, как только, так сразу...
+// TODO: - Перейти с JSONDecoder на TopLevelDecoder, как только, так сразу...
 public final class Decode<Failure: Error, Item: Decodable>: GroupProducerTask<Item, Error> {
   // MARK:
   public init(
