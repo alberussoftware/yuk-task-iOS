@@ -31,4 +31,4 @@ jeudesprits, jeudesprits@icloud.com
 
 Copyright (c) 2020 jeudesprits <jeudesprits@icloud.com>
 
-YUKTest is available under the Apache License, Version 2.0 license. See the LICENSE file for more info.
+YUKTask is available under the Apache License, Version 2.0 license. See the LICENSE file for more info.
