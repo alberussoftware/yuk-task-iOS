@@ -1,0 +1,58 @@
+//
+//  MapErrorTask.swift
+//  PSTask
+//
+//  Created by Ruslan Lutfullin on 1/31/20.
+//
+
+import Foundation
+
+@available(iOS 13.0, macOS 10.15, watchOS 6.0, tvOS 13.0, macCatalyst 13.0, *)
+extension Tasks {
+  
+public final class MapError<Output, Failure: Error, NewFailure: Error>: GroupProducerTask<Output, NewFailure> {
+  // MARK:
+  public init(
+    from: ProducerTask<Output, Failure>,
+    transform: @escaping (Failure) -> NewFailure
+  ) {
+    let name = String(describing: Self.self)
+    
+    let transform =
+      BlockProducerTask<Output, NewFailure>(
+        name: "\(name).Transform",
+        qos: from.qualityOfService,
+        priority: from.queuePriority
+      ) { (task, finish) in
+        guard !task.isCancelled else {
+          finish(.failure(.internal(ProducerTaskError.executionFailure)))
+          return
+        }
+        
+        guard let consumed = from.produced else {
+          finish(.failure(.internal(ConsumerProducerTaskError.producingFailure)))
+          return
+        }
+        
+        switch consumed {
+        case let .failure(.provided(error)):
+          finish(.failure(.provided(transform(error))))
+        case let .failure(.internal(error)):
+          finish(.failure(.internal(error)))
+        case let .success(value):
+          finish(.success(value))
+        }
+      }.addDependency(from)
+    
+    super.init(
+      name: name,
+      qos: from.qualityOfService,
+      priority: from.queuePriority,
+      underlyingQueue: (from as? TaskQueueContainable)?.innerQueue.underlyingQueue,
+      tasks: (from, transform),
+      produced: transform
+    )
+  }
+}
+  
+}

@@ -1,0 +1,16 @@
+PODS:
+  - YUKTask (0.1.0)
+
+DEPENDENCIES:
+  - YUKTask (from `../`)
+
+EXTERNAL SOURCES:
+  YUKTask:
+    :path: "../"
+
+SPEC CHECKSUMS:
+  YUKTask: e37127bf0bfa85d991bd2d049d78d33dcfe677ec
+
+PODFILE CHECKSUM: 106662df3e8cbc4efad34c61325d60b36d8dbe8a
+
+COCOAPODS: 1.9.3
