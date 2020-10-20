@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name                  = 'YUKTask'
-  s.version               = '0.1.2'
+  s.version               = '0.1.3'
   s.summary               = 'Improved, fully generic version of Operation for iOS'
   s.homepage              = 'https://github.com/alberussoftware/yuk-task-iOS'
   s.license               = { :type => 'Apache 2.0', :file => 'LICENSE' }
