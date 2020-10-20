@@ -33,7 +33,7 @@ internal struct _TaskQueueDelegateObserver {
   // MARK:
   private unowned let taskQueue: TaskQueue
   
-  // MARK: - API
+  // MARK: -
   // MARK:
   internal init(taskQueue: TaskQueue) {
     self.taskQueue = taskQueue
@@ -94,7 +94,7 @@ open class TaskQueue: OperationQueue {
     super.init()
   }
   
-  // MARK: - API
+  // MARK: -
   // MARK:
   open func addTask<T: ProducerTaskProtocol>(_ task: T) {
     // Set up a observer to invoke the `OperationQueueDelegate` methods.

@@ -29,7 +29,7 @@ public enum ConsumerProducerTaskError: Error {
 open class ConsumerProducerTask<Input, Output, Failure: Error>:
   ProducerTask<Output, Failure>, ConsumerProducerTaskProtocol
 {
-  // MARK: - API
+  // MARK: -
   // MARK:
   public typealias Input = Input
   

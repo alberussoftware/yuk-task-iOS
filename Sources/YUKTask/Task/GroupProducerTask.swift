@@ -29,7 +29,7 @@ open class GroupProducerTask<Output, Failure: Error>: ProducerTask<Output, Failu
   private let startingTask = EmptyTask(name: "StartingTask")
   private let finishingTask = EmptyTask(name: "FinishingTask")
   
-  // MARK: - API
+  // MARK: -
   // MARK
   open func setUnderlyingQueue(_ queue: DispatchQueue) -> Self {
     precondition(state < .executing, "Cannot modify `underlyingQueue` after execution has begun")

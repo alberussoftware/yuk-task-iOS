@@ -128,7 +128,7 @@ open class ProducerTask<Output, Failure: Error>: Operation, ProducerTaskProtocol
     super.init()
   }
   
-  // MARK: - API
+  // MARK: -
   // MARK:
   public typealias Output = Output
   public typealias Failure = Failure

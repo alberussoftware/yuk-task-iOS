@@ -11,7 +11,7 @@ import Foundation
 extension Observers {
   
 public struct Empty: Observer {
-  // MARK: - API
+  // MARK: -
   // MARK:
 }
 

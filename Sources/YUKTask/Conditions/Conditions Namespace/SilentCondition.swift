@@ -11,7 +11,7 @@ import Foundation
 extension Conditions {
   
 public struct Silent<Base: Condition> {
-  // MARK: - API
+  // MARK: -
   // MARK:
   public typealias Failure = Base.Failure
   

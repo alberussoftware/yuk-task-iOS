@@ -11,7 +11,7 @@ import Foundation
 extension Observers {
   
 public struct Timeout {
-  // MARK: - API
+  // MARK: -
   // MARK:
   public let timeout: TimeInterval
   

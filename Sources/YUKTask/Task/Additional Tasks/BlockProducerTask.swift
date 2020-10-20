@@ -24,7 +24,7 @@ public final class BlockProducerTask<Output, Failure: Error>: ProducerTask<Outpu
   // MARK:
   private let block: Block
   
-  // MARK: - API
+  // MARK: -
   // MARK:
   public override func execute() {
     block(self) { (produced) in self.finish(with: produced) }

@@ -16,7 +16,7 @@ final class TasksNamespaceTests: XCTestCase {
       qos: .userInitiated
     )
   
-  // MARK: - API
+  // MARK: -
   // MARK:
   func testMapTask() {
     let expec1 = XCTestExpectation()
@@ -1012,6 +1012,5 @@ final class TasksNamespaceTests: XCTestCase {
     ("testBreakpointTask", testBreakpointTask),
   ]
 }
-
 
 extension String: Error {}

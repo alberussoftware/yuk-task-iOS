@@ -31,7 +31,7 @@ open class GroupConsumerProducerTask<Input, Output, Failure: Error>:
   private let startingTask = EmptyTask()
   private let finishingTask = EmptyTask()
   
-  // MARK: - API
+  // MARK: -
   // MARK
   open func setUnderlyingQueue(_ queue: DispatchQueue) -> Self {
     precondition(state < .executing, "Cannot modify `underlyingQueue` after execution has begun")

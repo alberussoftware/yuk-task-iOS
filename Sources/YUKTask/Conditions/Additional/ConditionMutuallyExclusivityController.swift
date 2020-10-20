@@ -18,7 +18,7 @@ internal final class _ConditionMutuallyExclusivityController {
   // MARK:
   private init() {}
   
-  // MARK: - API
+  // MARK: -
   // MARK:
   internal func add(_ operation: Operation, forCategories categories: [String]) {
     func addingManage(with operation: Operation, forCategory category: String) {
@@ -57,7 +57,7 @@ internal struct _ConditionMutuallyExclusivityObserver {
   // MARK:
   private let categories: [String]
   
-  // MARK: - API
+  // MARK: -
   // MARK:
   internal init(categories: [String]) {
     self.categories = categories

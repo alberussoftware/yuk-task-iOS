@@ -26,7 +26,7 @@ public final class BlockConsumerProducerTask<Input, Output, Failure: Error>:
   // MARK:
   private let block: Block
   
-  // MARK: - API
+  // MARK: -
   // MARK:
   public typealias Block = (BlockConsumerProducerTask, Consumed, @escaping (Produced) -> Void) -> Void
   

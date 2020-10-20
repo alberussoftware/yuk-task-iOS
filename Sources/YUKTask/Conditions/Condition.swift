@@ -21,7 +21,7 @@ public protocol Condition {
 
 @usableFromInline
 internal class _AnyConditionBaseBox<Failure: Error>: Condition {
-  // MARK: - API
+  // MARK: -
   // MARK:
   @inlinable
   internal func dependency<T: ProducerTaskProtocol>(for task: T) -> NonFailTask? {
@@ -44,7 +44,7 @@ internal class _AnyConditionBaseBox<Failure: Error>: Condition {
 
 @usableFromInline
 internal final class _AnyConditionBox<Base: Condition>: _AnyConditionBaseBox<Error> {
-  // MARK: - API
+  // MARK: -
   // MARK:
   @usableFromInline
   internal typealias Failure = Error
@@ -85,7 +85,7 @@ public struct AnyCondition: Condition {
   @usableFromInline
   internal let box: _AnyConditionBaseBox<Failure>
   
-  // MARK: - API
+  // MARK: -
   // MARK:
   public typealias Failure = Error
   

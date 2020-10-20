@@ -16,7 +16,7 @@ public final class GatedTask: NonFailTask {
   private var isCancelObserver: NSKeyValueObservation!
   private var isFinishObserver: NSKeyValueObservation!
   
-  // MARK: - API
+  // MARK: -
   // MARK:
   public override func execute() {
     guard !self.isCancelled else {

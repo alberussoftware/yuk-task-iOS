@@ -16,7 +16,7 @@ final class AdditionalTasksTests: XCTestCase {
       qos: .userInitiated
     )
   
-  // MARK: - API
+  // MARK: -
   // MARK:
   func testBlockProducerTask() {
     let expec = XCTestExpectation()

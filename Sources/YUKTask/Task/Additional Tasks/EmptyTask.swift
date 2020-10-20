@@ -9,7 +9,7 @@ import Foundation
 
 @available(iOS 13.0, macOS 10.15, watchOS 6.0, tvOS 13.0, macCatalyst 13.0, *)
 public final class EmptyTask: NonFailTask {
-  // MARK: - API
+  // MARK: -
   // MARK:
   public override func execute() {
     finish(with: .success)

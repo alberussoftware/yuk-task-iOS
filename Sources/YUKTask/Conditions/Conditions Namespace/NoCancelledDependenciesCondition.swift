@@ -11,7 +11,7 @@ import Foundation
 extension Conditions {
   
 public struct NoCancelledDependencies {
-  // MARK: - API
+  // MARK: -
   // MARK:
   public typealias Failure = Error
 }
