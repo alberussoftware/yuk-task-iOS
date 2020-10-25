@@ -60,6 +60,23 @@ open class GroupProducerTask<Output, Failure: Error>: ProducerTask<Output, Failu
   public let innerQueue: TaskQueue
   
   // MARK:
+  public init(
+    name: String? = nil,
+    qos: QualityOfService = .default,
+    priority: Operation.QueuePriority = .normal,
+    underlyingQueue: DispatchQueue? = nil
+  ) {
+    self.innerQueue = .init(
+      name: "\(Bundle.main.bundleIdentifier!).\(String(describing: Self.self)).inner",
+      qos: qos,
+      underlyingQueue: underlyingQueue,
+      startSuspended: true
+    )
+    super.init(name: name, qos: qos, priority: priority)
+    self.innerQueue.delegate = self
+    self.innerQueue.addTask(self.startingTask)
+  }
+  
   public init<T1: ProducerTaskProtocol>(
     name: String? = nil,
     qos: QualityOfService = .default,

@@ -62,6 +62,24 @@ open class GroupConsumerProducerTask<Input, Output, Failure: Error>:
   public let innerQueue: TaskQueue
   
   // MARK:
+  public init(
+    name: String? = nil,
+    qos: QualityOfService = .default,
+    priority: Operation.QueuePriority = .normal,
+    underlyingQueue: DispatchQueue? = nil,
+    producing: ProducingTask
+  ) {
+    self.innerQueue = .init(
+      name: "\(Bundle.main.bundleIdentifier!).\(String(describing: Self.self)).inner",
+      qos: qos,
+      underlyingQueue: underlyingQueue,
+      startSuspended: true
+    )
+    super.init(name: name, qos: qos, priority: priority, producing: producing)
+    self.innerQueue.delegate = self
+    self.innerQueue.addTask(self.startingTask)
+  }
+  
   public init<T1: ProducerTaskProtocol>(
     name: String? = nil,
     qos: QualityOfService = .default,
