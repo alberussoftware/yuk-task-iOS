@@ -21,7 +21,8 @@ public protocol ProducerTaskProtocol: Operation, Identifiable {
   associatedtype Failure: Error
   
   // MARK:
-  typealias Produced = Result<Output, ProducerTaskSeparateError<Failure>>
+  typealias ProducedFailure = ProducerTaskSeparateError<Failure>
+  typealias Produced = Result<Output, ProducedFailure>
   var produced: Produced? { get }
   
   // MARK:
