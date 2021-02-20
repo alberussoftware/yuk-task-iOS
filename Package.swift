@@ -7,6 +7,7 @@ let package = Package(
   name: "YUKTask",
   platforms: [
     .iOS(.v13),
+    .macOS(.v10_15),
   ],
   products: [
     .library(name: "YUKTask", targets: ["YUKTask"]),
@@ -15,7 +16,7 @@ let package = Package(
     .package(name: "YUKLock", url: "https://github.com/alberussoftware/yuk-lock-iOS",  .branch("master")),
   ],
   targets: [
-    .target( name: "YUKTask", dependencies: []),
-    .testTarget(name: "YUKTaskTests", dependencies: ["YUKTask"]),
+    .target( name: "YUKTask", dependencies: ["YUKLock"]),
+    .testTarget(name: "YUKTaskTests", dependencies: ["YUKTask", "YUKLock"]),
   ]
 )
