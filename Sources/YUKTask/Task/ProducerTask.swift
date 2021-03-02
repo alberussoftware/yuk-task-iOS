@@ -5,7 +5,7 @@
 //  Created by Ruslan Lutfullin on 10/19/20.
 //
 
-import YUKLock
+import class YUKLock.UnfairLock
 import class Combine.Future
 import class Combine.AnyCancellable
 import struct Combine.Published
@@ -13,8 +13,6 @@ import struct Combine.Published
 // MARK: -
 open class ProducerTask<Output, Failure: Error>: Identifiable {
   // MARK: Private Props
-  private let __lock = UnfairLock()
-  //
   private var __operation: _AsyncOperation!
   //
   private var __cancellables = Set<AnyCancellable>()
@@ -27,6 +25,8 @@ open class ProducerTask<Output, Failure: Error>: Identifiable {
   private var __promise: Future.Promise!
   
   // MARK: Internal Prop
+  internal let _lock = UnfairLock()
+  //
   internal var _operation: _AsyncOperation { __operation }
   //
   internal var _promise: Promise { __promise }
@@ -66,8 +66,8 @@ open class ProducerTask<Output, Failure: Error>: Identifiable {
   public func produce<O, F: Error>(new task: ProducerTask<O, F>) {
     precondition(!isFinished, "Cannot produce new task after task is finished")
     
-    __lock.lock()
-    defer { __lock.unlock() }
+    _lock.lock()
+    defer { _lock.unlock() }
     
     __observers.forEach { $0.task(self, didProduce: task) }
   }
@@ -75,8 +75,8 @@ open class ProducerTask<Output, Failure: Error>: Identifiable {
   @discardableResult public func add<C: Condition>(condition: C) -> C.Future {
     precondition(!isFinished && !isExecuting, "Conditions cannot be modified after execution has begun")
     
-    __lock.lock()
-    defer { __lock.unlock() }
+    _lock.lock()
+    defer { _lock.unlock() }
     
     let evaluateTask = BlockTask<C.Failure> { [weak self] (_, promise) in
       guard let self = self else { return }
@@ -103,8 +103,8 @@ open class ProducerTask<Output, Failure: Error>: Identifiable {
   public func add<O: Observer>(observer: O) {
     precondition(!isFinished && !isExecuting, "Observers cannot be modified after execution has begun")
     
-    __lock.lock()
-    defer { __lock.unlock() }
+    _lock.lock()
+    defer { _lock.unlock() }
     
     __observers.append(observer)
   }
@@ -154,19 +154,18 @@ extension ProducerTask {
     }
     
     let conditionTasksCount = __conditionTasks.count
-    __conditionTasks
-      .lazy
+    __conditionTasks.lazy
       .enumerated()
       .forEach { (value) in
         value.element
           .publisher
-          .sink {
+          .sink { [weak self] in
             switch $0 {
             case .finished where value.offset == conditionTasksCount - 1:
               completion(.finish)
               
             case .failure:
-              self.cancel()
+              self?.cancel()
               completion(.finish)
               
             default:
