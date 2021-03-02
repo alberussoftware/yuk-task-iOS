@@ -16,7 +16,7 @@ let package = Package(
     .package(name: "YUKLock", url: "https://github.com/alberussoftware/yuk-lock-iOS",  .branch("master")),
   ],
   targets: [
-    .target( name: "YUKTask", dependencies: ["YUKLock"]),
+    .target( name: "YUKTask", dependencies: ["YUKLock"], exclude: ["./Task/GroupTasks/AnyProducerTaskArrayBuilder.swift.gyb"]),
     .testTarget(name: "YUKTaskTests", dependencies: ["YUKTask", "YUKLock"]),
   ]
 )
