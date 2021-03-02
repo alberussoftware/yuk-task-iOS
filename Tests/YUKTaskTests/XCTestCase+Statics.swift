@@ -7,6 +7,7 @@
 
 import class Dispatch.DispatchQueue
 import class Foundation.OperationQueue
+import class YUKTask.TaskQueue
 import class XCTest.XCTestCase
 
 // MARK: -
