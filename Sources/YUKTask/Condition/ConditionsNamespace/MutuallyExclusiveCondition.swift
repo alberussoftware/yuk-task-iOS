@@ -5,6 +5,8 @@
 //  Created by Ruslan Lutfullin on 1/17/20.
 //
 
+import Combine
+
 // MARK: -
 extension Conditions {
   public struct MutuallyExclusive<Category>: Condition {
@@ -13,8 +15,8 @@ extension Conditions {
     public func dependency<O, F: Error>(for task: ProducerTask<O, F>) -> AnyProducerTask? {
       nil
     }
-    public func evaluate<O, F: Error>(for task: ProducerTask<O, F>, with promise: @escaping Promise) {
-      promise(.success)
+    public func evaluate<O, F: Error>(for task: ProducerTask<O, F>) -> AnyPublisher<Void, Failure> {
+      Just(()).eraseToAnyPublisher()
     }
   }
 }

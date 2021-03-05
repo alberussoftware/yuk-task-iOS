@@ -5,17 +5,19 @@
 //  Created by Ruslan Lutfullin on 1/12/20.
 //
 
+import struct Combine.AnyPublisher
+
 // MARK: -
 public final class BlockProducerTask<Output, Failure: Error>: ProducerTask<Output, Failure> {
   // MARK: Private Props
   private let block: Block
   
   // MARK: Public Typealiases
-  public typealias Block = (_ self: BlockProducerTask, _ promise: @escaping Promise) -> Void
+  public typealias Block = (_ self: BlockProducerTask) -> AnyPublisher<Output, Failure>
   
-  // MARK: Public Props
-  public override func execute(with promise: @escaping Promise) {
-    block(self, promise)
+  // MARK: Public Methods
+  public override func execute() -> AnyPublisher<Output, Failure> {
+    block(self)
   }
   
   // MARK: Public Inits

@@ -5,43 +5,37 @@
 //  Created by Ruslan Lutfullin on 10/19/20.
 //
 
-import class YUKLock.UnfairLock
-import class Combine.Future
-import class Combine.AnyCancellable
-import struct Combine.Published
+import YUKLock
+import Combine
 
 // MARK: -
 open class ProducerTask<Output, Failure: Error>: Identifiable {
   // MARK: Private Props
   private var __operation: _AsyncOperation!
   //
-  private var __cancellables = Set<AnyCancellable>()
-  //
+  @UnfairLocked
   private var __conditionTasks = [AnyProducerTask]()
   //
+  @UnfairLocked
   private var __observers = [Observer]()
   //
-  private var __publisher: Future!
-  private var __promise: Future.Promise!
+  private var __publisher: AnyPublisher<Output, Failure>!
+  private var __promise: Future<Output, Failure>.Promise!
   
   // MARK: Internal Prop
-  internal let _lock = UnfairLock()
-  //
   internal var _operation: _AsyncOperation { __operation }
   //
-  internal var _promise: Promise { __promise }
+  internal var _promise: Future<Output, Failure>.Promise { __promise }
   
   // MARK: Public Typealiases
   public typealias Produced = Result<Output, Failure>
-  public typealias Future = Combine.Future<Output, Failure>
-  public typealias Promise = Future.Promise
   
   // MARK: Public Props
   public var id: ObjectIdentifier { .init(self) }
   //
-  public private(set) var name: String? { didSet { _operation.name = name } }
-  public private(set) var qualityOfService = QualityOfService.default { didSet { _operation.qualityOfService = qualityOfService._underline } }
-  public private(set) var queuePriority = QueuePriority.normal { didSet { _operation.queuePriority = queuePriority._underline } }
+  public var name: String? { _operation.name }
+  public var qualityOfService: QualityOfService {  .init(_operation.qualityOfService)  }
+  public var queuePriority: QueuePriority { .init(_operation.queuePriority)  }
   //
   public var isExecuting: Bool { __operation.isExecuting }
   public var isFinished: Bool { __operation.isFinished }
@@ -49,42 +43,41 @@ open class ProducerTask<Output, Failure: Error>: Identifiable {
   //
   public private(set) var produced: Produced?
   //
-  public var publisher: Future { __publisher }
+  public var publisher: AnyPublisher<Output, Failure> { __publisher }
   
   // MARK: Public Methods
-  open func execute(with promise: @escaping Promise) {
+  open func execute() -> AnyPublisher<Output, Failure> {
     _abstract()
   }
-  open func finishing(with produced: Produced) { }
+  open func finishing(with produced: Produced) -> AnyPublisher<Void, Never> {
+    Just(()).eraseToAnyPublisher()
+  }
   open func finished(with produced: Produced) { }
   //
   open func cancel() {
     __operation.cancel()
-    __observers.forEach { $0.taskDidCancel(self) }
+    $__observers.read { $0.forEach { $0.taskDidCancel(self) } }
   }
   //
-  public func produce<O, F: Error>(new task: ProducerTask<O, F>) {
-    precondition(!isFinished, "Cannot produce new task after task is finished")
+  @discardableResult
+  public func produce<O, F: Error>(new task: ProducerTask<O, F>) -> AnyPublisher<O, F> {
+    precondition((.pending)...(.executing) ~= _operation.state , "Cannot produce new task after task is executing or before added to the queue")
     
-    _lock.lock()
-    defer { _lock.unlock() }
+    $__observers.read { $0.forEach { $0.task(self, didProduce: task) } }
     
-    __observers.forEach { $0.task(self, didProduce: task) }
+    return task.publisher
   }
   //
-  @discardableResult public func add<C: Condition>(condition: C) -> C.Future {
-    precondition(!isFinished && !isExecuting, "Conditions cannot be modified after execution has begun")
+  @discardableResult
+  public func add<C: Condition>(condition: C) -> AnyPublisher<Void, C.Failure> {
+    precondition(_operation.state < .pending, "Conditions cannot be modified after task added to the queue")
     
-    _lock.lock()
-    defer { _lock.unlock() }
-    
-    let evaluateTask = BlockTask<C.Failure> { [weak self] (_, promise) in
-      guard let self = self else { return }
-      condition.evaluate(for: self, with: promise)
+    let evaluateTask = BlockTask<C.Failure> { [weak self] (_) in
+      guard let self = self else { return Empty().eraseToAnyPublisher() }
+      return condition.evaluate(for: self)
     }
     
     let conditionTask: AnyProducerTask
-    
     if let dependencyTask = condition.dependency(for: self) {
       conditionTask = .init(GroupTask({ dependencyTask }, producer: evaluateTask))
     }
@@ -92,107 +85,97 @@ open class ProducerTask<Output, Failure: Error>: Identifiable {
       conditionTask = .init(evaluateTask)
     }
     
-    if let lastConditionTask = __conditionTasks.last {
+    if let lastConditionTask = $__conditionTasks.read({ $0.last }) {
       conditionTask.add(dependency: lastConditionTask)
     }
-    
-    __conditionTasks.append(conditionTask)
+    $__conditionTasks.write { $0.append(conditionTask) }
    
     return evaluateTask.publisher
   }
+  
   public func add<O: Observer>(observer: O) {
-    precondition(!isFinished && !isExecuting, "Observers cannot be modified after execution has begun")
+    precondition(_operation.state < .executing, "Observers cannot be modified after task execution has begun")
     
-    _lock.lock()
-    defer { _lock.unlock() }
-    
-    __observers.append(observer)
+    $__observers.write { $0.append(observer) }
   }
   public func add<O, F: Error>(dependency task: ProducerTask<O, F>) {
-    precondition(!isFinished && !isExecuting, "Dependencies cannot be modified after execution has begun")
+    precondition(_operation.state < .executing, "Dependencies cannot be modified after task execution has begun")
+    
     __operation.addDependency(task._operation)
   }
   //
-  @discardableResult public func name(_ string: String) -> Self {
-    precondition(!isFinished && !isExecuting, "Name cannot be modified after execution has begun")
-    name = string
+  @discardableResult
+  public func name(_ string: String) -> Self {
+    precondition(_operation.state < .pending, "Name cannot be modified after task added to the queue")
+    
+    _operation.name = string
     return self
   }
-  @discardableResult public func qualityOfService(_ qos: QualityOfService) -> Self {
-    precondition(!isFinished && !isExecuting, "QualityOfService cannot be modified after execution has begun")
-    qualityOfService = qos
+  @discardableResult
+  public func qualityOfService(_ qos: QualityOfService) -> Self {
+    precondition(_operation.state < .pending, "QualityOfService cannot be modified after task added to the queue")
+    
+    _operation.qualityOfService  = qos._underline
     return self
   }
-  @discardableResult public func queuePriority(_ priority: QueuePriority) -> Self {
-    precondition(!isFinished && !isExecuting, "QueuePriority cannot be modified after execution has begun")
-    queuePriority = priority
+  @discardableResult
+  public func queuePriority(_ priority: QueuePriority) -> Self {
+    precondition(_operation.state < .pending, "QueuePriority cannot be modified aftertask added to the queue")
+    
+    _operation.queuePriority = priority._underline
     return self
+  }
+  //
+  public final func eraseToAnyProducerTask() -> AnyProducerTask {
+    .init(self)
   }
   
   // MARK: Public Inits
   public init() {
-    setupPublisher()
-    setupOperation()
-  }
-}
-
-extension ProducerTask {
-  private func setupOperation() {
-    __operation = .init(work(_:_:), preparation: preparation(_:_:), finishing: finishing(_:), finished: finished(_:))
+    __operation = .init(preparation: preparation(_:), work: work(_:), finishing: finishing(_:), finished: finished(_:))
     __operation.name = String(describing: Self.self)
-  }
-  private func setupPublisher() {
-    __publisher = .init { [weak self] (promise) in self?.__promise = promise }
+    __publisher = Future { [weak self] (promise) in self?.__promise = promise }.eraseToAnyPublisher()
   }
 }
-
 extension ProducerTask {
-  private func preparation(_ op: _AsyncOperation, _ completion: @escaping (Completion) -> Void) {
-    if __conditionTasks.isEmpty || isCancelled {
-      completion(.finish)
-      return
-    }
+  private func preparation(_ op: _AsyncOperation) -> AnyPublisher<Void, Never> {
+    if $__conditionTasks.read({ $0.isEmpty }) || isCancelled { return Just(()).eraseToAnyPublisher() }
     
-    let conditionTasksCount = __conditionTasks.count
-    __conditionTasks.lazy
-      .enumerated()
-      .forEach { (value) in
-        value.element
-          .publisher
-          .sink { [weak self] in
-            switch $0 {
-            case .finished where value.offset == conditionTasksCount - 1:
-              completion(.finish)
-              
-            case .failure:
-              self?.cancel()
-              completion(.finish)
-              
-            default:
-              break
-            }
-          } receiveValue: { (_) in }
-          .store(in: &__cancellables)
-        
-        produce(new: value.element)
+    return Publishers.MergeMany($__conditionTasks.read { $0.lazy.map { self.produce(new: $0) } })
+      .map { (_) in () }
+      .catch { (_) -> AnyPublisher<Void, Never> in
+        self.cancel()
+        return Just(()).eraseToAnyPublisher()
       }
+      .collect()
+      .flatMap { (_) in Just(()).eraseToAnyPublisher() }
+      .eraseToAnyPublisher()
   }
-  private func work(_ op: _AsyncOperation, _ completion: @escaping (Completion) -> Void) {
-    __observers.forEach { $0.taskDidStart(self) }
-    execute { (result) in
-      self.produced = result
-      completion(.finish)
-    }
+  private func work(_ op: _AsyncOperation) -> AnyPublisher<Void, Never> {
+    $__observers.read { $0.forEach { $0.taskDidStart(self) } }
+    return execute()
+      .first()
+      .map { (value) -> Void in
+        self.produced = .success(value)
+        return ()
+      }
+      .catch { (error) -> AnyPublisher<Void, Never> in
+        self.produced = .failure(error)
+        return Just(()).eraseToAnyPublisher()
+      }
+      .eraseToAnyPublisher()
   }
-  private func finishing(_ op: _AsyncOperation) {
+  private func finishing(_ op: _AsyncOperation) -> AnyPublisher<Void, Never> {
     guard let produced = produced else { preconditionFailure("Internal inconsistency") }
-    finishing(with: produced)
+    return finishing(with: produced)
+      .first()
+      .eraseToAnyPublisher()
   }
   private func finished(_ op: _AsyncOperation) {
     guard let produced = produced else { preconditionFailure("Internal inconsistency") }
     __promise(produced)
+    $__observers.read { $0.forEach { $0.taskDidFinish(self) } }
     finished(with: produced)
-    __observers.forEach { $0.taskDidFinish(self) }
   }
 }
 

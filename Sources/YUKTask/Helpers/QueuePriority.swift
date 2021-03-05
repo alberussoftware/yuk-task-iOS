@@ -29,4 +29,21 @@ public enum QueuePriority {
       return .veryHigh
     }
   }
+  
+  internal init(_ priority: Operation.QueuePriority) {
+    switch priority {
+    case .veryLow:
+      self = .veryLow
+    case .low:
+      self = .low
+    case .normal:
+      self = .normal
+    case .high:
+      self = .high
+    case .veryHigh:
+      self = .veryHigh
+    @unknown default:
+      self = .normal
+    }
+  }
 }

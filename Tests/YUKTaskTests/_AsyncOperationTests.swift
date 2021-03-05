@@ -6,6 +6,7 @@
 //
 
 import XCTest
+import Combine
 @testable import YUKTask
 
 // MARK: -
@@ -13,8 +14,8 @@ final class _AsyncOperationTests: XCTestCase {
 	func testWillEnqueueBeforeAdding() {
 		let expectation = XCTestExpectation()
 		
-		let operation = _AsyncOperation { (_, completion) in
-      completion(.finish)
+		let operation = _AsyncOperation { (_) in
+      Just(()).eraseToAnyPublisher()
     } finished: { (_) in
       expectation.fulfill()
     }
@@ -26,8 +27,8 @@ final class _AsyncOperationTests: XCTestCase {
 	func testWillEnqueueAfterAdding() {
 		let expectation = XCTestExpectation()
 		
-    let operation = _AsyncOperation { (_, completion) in
-      completion(.finish)
+    let operation = _AsyncOperation { (_) in
+      Just(()).eraseToAnyPublisher()
     } finished: { (_) in
       expectation.fulfill()
     }
@@ -45,24 +46,29 @@ final class _AsyncOperationTests: XCTestCase {
     let expectation3 = XCTestExpectation()
     let expectation4 = XCTestExpectation()
 
-    let operation = _AsyncOperation { (op, completion) in
-      DispatchQueue.global().asyncAfter(deadline: .now() + .seconds(2)) {
-        XCTAssertTrue(op.isExecuting)
-        expectation2.fulfill()
-        completion(.finish)
-      }
-    } preparation: { (op, completion) in
-      DispatchQueue.global().asyncAfter(deadline: .now() + .seconds(2)) {
-        XCTAssertFalse(op.isExecuting)
-        expectation1.fulfill()
-        completion(.finish)
-      }
+    let operation = _AsyncOperation { (op) in
+      Future { (promise) in
+        DispatchQueue.global().asyncAfter(deadline: .now() + .seconds(2)) {
+          XCTAssertFalse(op.isExecuting)
+          expectation1.fulfill()
+          promise(.success)
+        }
+      }.eraseToAnyPublisher()
+    } work: { (op) in
+      Future { (promise) in
+        DispatchQueue.global().asyncAfter(deadline: .now() + .seconds(2)) {
+          XCTAssertTrue(op.isExecuting)
+          expectation2.fulfill()
+          promise(.success)
+        }
+      }.eraseToAnyPublisher()
     } finishing: { (op) in
-        XCTAssertFalse(op.isFinished)
-        expectation3.fulfill()
+      XCTAssertFalse(op.isFinished)
+      expectation3.fulfill()
+      return Just(()).eraseToAnyPublisher()
     } finished: { (op) in
-        XCTAssertTrue(op.isFinished)
-        expectation4.fulfill()
+      XCTAssertTrue(op.isFinished)
+      expectation4.fulfill()
     }
     operation.willEnqueue()
     Self.operationQueue.addOperation(operation)
@@ -73,13 +79,15 @@ final class _AsyncOperationTests: XCTestCase {
 	func testCancelationDuringPreparation() {
 		let expectation = XCTestExpectation()
 		
-		let operation = _AsyncOperation { (op, completion) in
-		  XCTAssertTrue(op.isCancelled)
-      completion(.finish)
-    } preparation: { (_, completion) in
-      DispatchQueue.global().asyncAfter(deadline: .now() + .seconds(3)) {
-        completion(.finish)
-      }
+		let operation = _AsyncOperation { (_) in
+      Future { (promise) in
+        DispatchQueue.global().asyncAfter(deadline: .now() + .seconds(3)) {
+          promise(.success)
+        }
+      }.eraseToAnyPublisher()
+    } work: { (op) in
+      XCTAssertTrue(op.isCancelled)
+      return Just(()).eraseToAnyPublisher()
     } finished: { (_) in
 			expectation.fulfill()
 		}
@@ -94,11 +102,13 @@ final class _AsyncOperationTests: XCTestCase {
 	func testCancelationDuringWork() {
 		let expectation = XCTestExpectation()
 
-    let operation = _AsyncOperation { (op, completion) in
-      DispatchQueue.global().asyncAfter(deadline: .now() + .seconds(3)) {
-        XCTAssertTrue(op.isCancelled)
-        completion(.finish)
-      }
+    let operation = _AsyncOperation(preparation: nil) { (op) in
+      Future { (promise) in
+        DispatchQueue.global().asyncAfter(deadline: .now() + .seconds(3)) {
+          XCTAssertTrue(op.isCancelled)
+          promise(.success)
+        }
+      }.eraseToAnyPublisher()
     } finished: { (_) in
       expectation.fulfill()
     }
@@ -118,10 +128,12 @@ final class _AsyncOperationTests: XCTestCase {
     
     do {
       let _operationQueue = OperationQueue()
-      let _operation = _AsyncOperation { (_, completion) in
-        DispatchQueue.global().asyncAfter(deadline: .now() + .seconds(3)) {
-          completion(.finish)
-        }
+      let _operation = _AsyncOperation(preparation: nil) { (_) in
+        Future { (promise) in
+          DispatchQueue.global().asyncAfter(deadline: .now() + .seconds(3)) {
+            promise(.success)
+          }
+        }.eraseToAnyPublisher()
       }
       _operation.willEnqueue()
       _operationQueue.addOperation(_operation)

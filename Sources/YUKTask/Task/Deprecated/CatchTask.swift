@@ -5,7 +5,20 @@
 //  Created by Ruslan Lutfullin on 2/3/20.
 //
 
-import Foundation
+extension Tasks {
+  public final class Catch<UpstreamOutput, UpstreamFailure: Error, Output, Failure: Error>: GroupProducerTask<Output, Failure> {
+    
+    init(upstream: ProducerTask<UpstreamOutput, UpstreamFailure>, handler: @escaping (UpstreamFailure) -> ProducerTask<Output, Failure>) {
+      
+//      BlockConsumerProducerTask<UpstreamOutput, Output, Failure>.init(producing: upstream) { (_, consumed, promise) in
+//        
+//      }
+      
+      super.init()
+    }
+  }
+}
+
 
 //@available(iOS 13.0, macOS 10.15, watchOS 6.0, tvOS 13.0, macCatalyst 13.0, *)
 //extension Tasks {

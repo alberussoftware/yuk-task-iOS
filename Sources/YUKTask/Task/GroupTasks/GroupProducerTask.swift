@@ -5,45 +5,50 @@
 //  Created by Ruslan Lutfullin on 1/5/20.
 //
 
+import Combine
+
+import class YUKLock.UnfairLocked
 import class Dispatch.DispatchQueue
-import class Combine.AnyCancellable
 
 // MARK: -
-open class GroupProducerTask<Output, Failure: Error>: ProducerTask<Output, Failure> {
+open class GroupProducerTask<Output, Failure: Error>: ProducerTask<Output, Failure>, _TaskQueueContainable {
   // MARK: Private Props
-  private var __cancellable: AnyCancellable?
+  @UnfairLocked
+  private var __innerTasks = [AnyProducerTask]()
+  @UnfairLocked
+  private var __producerTask: Producer!
+  
+  private lazy var __finishTask = BlockProducerTask<Output, Failure> { [weak self] (_) in
+    guard let self = self else { return Empty().eraseToAnyPublisher() }
+    return self.producer.publisher
+  }
   
   // MARK: Internal Props
   internal final let _taskQueue = TaskQueue().isSuspended(true)
-  internal final private(set) var _innerTasks = [AnyProducerTask]()
   
   // MARK: Public Typealiases
   public typealias Producer = ProducerTask<Output, Failure>
   
   // MARK: Public Props
-  public final private(set) var producer: Producer!
+  public final var producer: Producer { __producerTask }
   
   // MARK: Public Methods
-  public final override func execute(with promise: @escaping Promise) {
-    precondition(producer != nil, "Instantiate with `init(_:)` or `init() must be accompanied by a mandatory call `set(producer:)` method")
-    precondition(!_innerTasks.contains { $0 === producer }, "Inner tasks should not contain `producer` task")
+  public final override func execute() -> AnyPublisher<Output, Failure> {
+    precondition(__producerTask != nil, "Instantiate with `init(_:)` or `init() must be accompanied by a mandatory call `set(producer:)` method")
+    precondition(!$__innerTasks.read({ $0.contains { $0 === producer } }), "Inner tasks should not contain `producer` task")
     
-    _innerTasks.forEach {
-      producer.add(dependency: $0)
-      _taskQueue.add($0)
+    defer { _taskQueue.isSuspended(false) }
+    
+    $__innerTasks.read {
+      $0.forEach {
+        producer.add(dependency: $0)
+        _taskQueue.add($0)
+      }
     }
     _taskQueue.add(producer)
     
-    __cancellable = producer
-      .publisher
-      .sink {
-        guard case let .failure(error) = $0 else { return }
-        promise(.failure(error))
-      } receiveValue: {
-        promise(.success($0))
-      }
-    
-    _taskQueue.isSuspended(false)
+    __finishTask.add(dependency: producer)
+    return _taskQueue.add(__finishTask)
   }
   //
   open override func cancel() {
@@ -51,30 +56,34 @@ open class GroupProducerTask<Output, Failure: Error>: ProducerTask<Output, Failu
     super.cancel()
   }
   //
+  @discardableResult
+  public final override func produce<O, F: Error>(new task: ProducerTask<O, F>) -> AnyPublisher<O, F> {
+    __finishTask.add(dependency: task)
+    return super.produce(new: task)
+  }
+  //
   public final func set(producer: Producer) {
-    _lock.lock()
-    defer { _lock.unlock() }
-    precondition(!isFinished && !isExecuting, "`producer` cannot be modified after execution has begun")
-    self.producer = producer
+    precondition(_operation.state < .executing, "`producer` cannot be modified after execution has begun")
+    
+    __producerTask = producer
   }
   public final func add<O, F: Error>(inner task: ProducerTask<O, F>) {
-    _lock.lock()
-    defer { _lock.unlock() }
-    precondition(!isFinished && !isExecuting, "Cannot be added inner task after execution has begun")
-    _innerTasks.append(.init(task))
+    precondition(_operation.state < .executing, "Cannot be added inner task after execution has begun")
+    
+    $__innerTasks.write { $0.append(.init(task)) }
   }
   
   // MARK: Public Inits
-  init(@AnyProducerTaskArrayBuilder _ builder: () -> [AnyProducerTask], producer: Producer) {
-    self.producer = producer
-    _innerTasks = builder()
+  public init(@AnyProducerTaskArrayBuilder _ builder: () -> [AnyProducerTask], producer: Producer) {
+    __producerTask = producer
+    __innerTasks = builder()
     super.init()
   }
-  init(@AnyProducerTaskArrayBuilder _ builder: () -> [AnyProducerTask]) {
-    _innerTasks = builder()
+  public init(@AnyProducerTaskArrayBuilder _ builder: () -> [AnyProducerTask]) {
+    __innerTasks = builder()
     super.init()
   }
-  override init() {
+  public override init() {
     super.init()
   }
 }

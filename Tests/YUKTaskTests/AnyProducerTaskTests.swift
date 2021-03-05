@@ -6,16 +6,16 @@
 //
 
 import XCTest
+import Combine
 @testable import YUKTask
 
-import class Combine.AnyCancellable
 
 // MARK: -
 final class AnyProducerTaskTests: XCTestCase {
   func testName() {
     final class TestTask: ProducerTask<Int, Error> {
-      override func execute(with promise: @escaping Promise) {
-        promise(.success(21))
+      override func execute() -> AnyPublisher<Int, Error> {
+        Result.Publisher(.success(21)).eraseToAnyPublisher()
       }
     }
     
@@ -27,8 +27,8 @@ final class AnyProducerTaskTests: XCTestCase {
   }
   func testQualityOfService() {
     final class TestTask: ProducerTask<Int, Error> {
-      override func execute(with promise: @escaping Promise) {
-        promise(.success(21))
+      override func execute() -> AnyPublisher<Int, Error> {
+        Result.Publisher(.success(21)).eraseToAnyPublisher()
       }
     }
     
@@ -40,8 +40,8 @@ final class AnyProducerTaskTests: XCTestCase {
   }
   func testQueuePriority() {
     final class TestTask: ProducerTask<Int, Error> {
-      override func execute(with promise: @escaping Promise) {
-        promise(.success(21))
+      override func execute() -> AnyPublisher<Int, Error> {
+        Result.Publisher(.success(21)).eraseToAnyPublisher()
       }
     }
     
@@ -54,13 +54,13 @@ final class AnyProducerTaskTests: XCTestCase {
   //
   func testProduced() {
     final class SuccessTestTask: ProducerTask<Int, Error> {
-      override func execute(with promise: @escaping Promise) {
-        promise(.success(21))
+      override func execute() -> AnyPublisher<Int, Error> {
+        Result.Publisher(.success(21)).eraseToAnyPublisher()
       }
     }
     final class FailureTestTask: ProducerTask<Int, Error> {
-      override func execute(with promise: @escaping Promise) {
-        promise(.failure(.oops))
+      override func execute() -> AnyPublisher<Int, Error> {
+        Fail<Int, Error>(error: .oops).eraseToAnyPublisher()
       }
     }
     
@@ -79,10 +79,12 @@ final class AnyProducerTaskTests: XCTestCase {
   //
   func testPublisher() {
     final class TestTask: ProducerTask<Int, Error> {
-      override func execute(with promise: @escaping Promise) {
-        DispatchQueue.global().asyncAfter(deadline: .now() + .seconds(2)) {
-          promise(.success(21))
-        }
+      override func execute() -> AnyPublisher<Int, Error> {
+        Future { (promise) in
+          DispatchQueue.global().asyncAfter(deadline: .now() + .seconds(2)) {
+            promise(.success(21))
+          }
+        }.eraseToAnyPublisher()
       }
     }
     
@@ -111,12 +113,14 @@ final class AnyProducerTaskTests: XCTestCase {
   //
   func testFinishes() {
     final class TestTask: ProducerTask<Int, Error> {
-      override func execute(with promise: @escaping Promise) {
-        DispatchQueue.global().asyncAfter(deadline: .now() + .seconds(2)) {
-          promise(.success(21))
-        }
+      override func execute() -> AnyPublisher<Int, Error> {
+        Future { (promise) in
+          DispatchQueue.global().asyncAfter(deadline: .now() + .seconds(2)) {
+            promise(.success(21))
+          }
+        }.eraseToAnyPublisher()
       }
-      override func finishing(with produced: Produced) {
+      override func finishing(with produced: Produced) -> AnyPublisher<Void, Never> {
         switch produced {
         case let .success(value):
           XCTAssert(value == 21)
@@ -125,6 +129,8 @@ final class AnyProducerTaskTests: XCTestCase {
         }
         XCTAssertFalse(isFinished)
         finishingExpectation.fulfill()
+        
+        return Just(()).eraseToAnyPublisher()
       }
       override func finished(with produced: Produced) {
         switch produced {
@@ -154,12 +160,12 @@ final class AnyProducerTaskTests: XCTestCase {
   }
   func testCancellation() {
     final class TestTask: ProducerTask<Int, Error> {
-      override func execute(with promise: @escaping Promise) {
+      override func execute() -> AnyPublisher<Int, Error> {
         guard !isCancelled else {
-          promise(.failure(.cancelled))
-          return
+          return Result.Publisher(.failure(.cancelled)).eraseToAnyPublisher()
         }
         XCTAssertTrue(false)
+        return Result.Publisher(.success(21)).eraseToAnyPublisher()
       }
     }
     let task = AnyProducerTask(TestTask())
@@ -175,16 +181,18 @@ final class AnyProducerTaskTests: XCTestCase {
   }
   func testProduce() {
     final class ProduceTestTask: ProducerTask<Int, Error> {
-      override func execute(with promise: @escaping Promise) {
-        DispatchQueue.global().asyncAfter(deadline: .now() + .seconds(2)) {
-          promise(.success(22))
-        }
+      override func execute() -> AnyPublisher<Int, Error> {
+        Future { (promise) in
+          DispatchQueue.global().asyncAfter(deadline: .now() + .seconds(2)) {
+            promise(.success(22))
+          }
+        }.eraseToAnyPublisher()
       }
     }
     final class TestTask: ProducerTask<Int, Error> {
-      override func execute(with promise: @escaping Promise) {
+      override func execute() -> AnyPublisher<Int, Error> {
         produce(new: produceTask)
-        promise(.success(21))
+        return Result.Publisher(.success(21)).eraseToAnyPublisher()
       }
       
       private let produceTask: ProduceTestTask
@@ -209,10 +217,12 @@ final class AnyProducerTaskTests: XCTestCase {
   //
   func testAddObserver() {
     final class TestTask: ProducerTask<Int, Error> {
-      override func execute(with promise: @escaping Promise) {
-        DispatchQueue.global().asyncAfter(deadline: .now() + .seconds(2)) {
-          promise(.success(21))
-        }
+      override func execute() -> AnyPublisher<Int, Error> {
+        Future { (promise) in
+          DispatchQueue.global().asyncAfter(deadline: .now() + .seconds(2)) {
+            promise(.success(21))
+          }
+        }.eraseToAnyPublisher()
       }
     }
     struct TestObserver: Observer {
@@ -259,14 +269,16 @@ final class AnyProducerTaskTests: XCTestCase {
   }
   func testAddCondition() {
     final class TestTask: ProducerTask<Int, Error> {
-      override func execute(with promise: @escaping Promise) {
-        DispatchQueue.global().asyncAfter(deadline: .now() + .seconds(2)) {
-          guard !self.isCancelled else {
-            promise(.failure(.cancelled))
-            return
+      override func execute() -> AnyPublisher<Int, Error> {
+        Future { (promise) in
+          DispatchQueue.global().asyncAfter(deadline: .now() + .seconds(2)) {
+            guard !self.isCancelled else {
+              promise(.failure(.cancelled))
+              return
+            }
+            promise(.success(21))
           }
-          promise(.success(21))
-        }
+        }.eraseToAnyPublisher()
       }
     }
     
@@ -287,7 +299,7 @@ final class AnyProducerTaskTests: XCTestCase {
         XCTAssertTrue(false)
       }
       .store(in: &cancellables)
-
+    
     task.add(dependency: dependencyTask)
     Self.taskQueue.add(dependencyTask)
     Self.taskQueue.add(task)
@@ -313,11 +325,13 @@ final class AnyProducerTaskTests: XCTestCase {
   //
   func testQueues() {
     final class TestTask: ProducerTask<Int, Error> {
-      override func execute(with promise: @escaping Promise) {
-        dispatchPrecondition(condition: .onQueue(workDispatchQueue))
-        DispatchQueue.global().asyncAfter(deadline: .now() + .seconds(2)) {
-          promise(.success(21))
-        }
+      override func execute() -> AnyPublisher<Int, Error> {
+        Future { (promise) in
+          dispatchPrecondition(condition: .onQueue(self.workDispatchQueue))
+          DispatchQueue.global().asyncAfter(deadline: .now() + .seconds(2)) {
+            promise(.success(21))
+          }
+        }.eraseToAnyPublisher()
       }
       let workDispatchQueue: DispatchQueue
       init(workDispatchQueue: DispatchQueue) {
@@ -350,7 +364,7 @@ final class AnyProducerTaskTests: XCTestCase {
       }
       .store(in: &cancellables)
     Self.taskQueue.add(task)
-
+    
     wait(for: [expectation], timeout: 3.0)
   }
   

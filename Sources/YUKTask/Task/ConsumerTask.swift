@@ -5,6 +5,8 @@
 //  Created by Ruslan Lutfullin on 1/4/20.
 //
 
+import struct Combine.AnyPublisher
+
 // MARK: -
 open class ConsumerProducerTask<Input, Output, Failure: Error>: ProducerTask<Output, Failure> {
   // MARK: Public Typealiases
@@ -17,10 +19,10 @@ open class ConsumerProducerTask<Input, Output, Failure: Error>: ProducerTask<Out
   public final var consumed: Consumed? { producing.produced }
   
   // MARK: Public Methods
-  public final override func execute(with promise: @escaping Promise) {
-    execute(with: consumed, and: promise)
+  public final override func execute() -> AnyPublisher<Output, Failure> {
+    execute(with: consumed)
   }
-  open func execute(with consumed: Consumed?, and promise: @escaping Promise) {
+  open func execute(with consumed: Consumed?) -> AnyPublisher<Output, Failure> {
     _abstract()
   }
   

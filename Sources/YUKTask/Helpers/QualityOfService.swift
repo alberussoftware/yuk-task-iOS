@@ -42,8 +42,8 @@ public enum QualityOfService {
       self = .userInteractive
     case .utility:
       self = .utility
-    default:
-      preconditionFailure()
+    @unknown default:
+      self = .default
     }
   }
 }

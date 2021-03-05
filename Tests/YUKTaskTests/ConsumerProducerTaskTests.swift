@@ -6,28 +6,33 @@
 //
 
 import XCTest
+import Combine
 @testable import YUKTask
-
-import class Combine.AnyCancellable
 
 // MARK: -
 final class ConsumerProducerTaskTests: XCTestCase {
   func testExecute() {
     final class ProducingTestTask: ProducerTask<Int, Error> {
-      override func execute(with promise: @escaping Promise) {
-        Thread.sleep(forTimeInterval: 2.0)
-        promise(.success(21))
+      override func execute() -> AnyPublisher<Int, Error> {
+        Future { (promise) in
+          DispatchQueue.global().asyncAfter(deadline: .now() + .seconds(2)) {
+            promise(.success(21))
+          }
+        }.eraseToAnyPublisher()
       }
     }
     final class TestTask: ConsumerProducerTask<Int, Int, Error> {
-      override func execute(with consumed: Consumed?, and promise: @escaping Promise) {
-        Thread.sleep(forTimeInterval: 2.0)
-        switch consumed {
-        case let .success(value):
-          promise(.success(value + 21))
-        default:
-          XCTAssertTrue(false)
-        }
+      override func execute(with consumed: Consumed?) -> AnyPublisher<Int, Error> {
+        Future { (promise) in
+          DispatchQueue.global().asyncAfter(deadline: .now() + .seconds(2)) {
+            switch consumed {
+            case let .success(value):
+              promise(.success(value + 21))
+            default:
+              XCTAssertTrue(false)
+            }
+          }
+        }.eraseToAnyPublisher()
       }
     }
     
@@ -58,24 +63,30 @@ final class ConsumerProducerTaskTests: XCTestCase {
   }
   func testProducingCancellation() {
     final class ProducingTestTask: ProducerTask<Int, Error> {
-      override func execute(with promise: @escaping Promise) {
-        Thread.sleep(forTimeInterval: 2.0)
-        guard !isCancelled else {
-          promise(.failure(.cancelled))
-          return
-        }
-        promise(.success(21))
+      override func execute() -> AnyPublisher<Int, Error> {
+        Future { (promise) in
+          DispatchQueue.global().asyncAfter(deadline: .now() + .seconds(2)) {
+            guard !self.isCancelled else {
+              promise(.failure(.cancelled))
+              return
+            }
+            promise(.success(21))
+          }
+        }.eraseToAnyPublisher()
       }
     }
     final class TestTask: ConsumerProducerTask<Int, Int, Error> {
-      override func execute(with consumed: Consumed?, and promise: @escaping Promise) {
-        Thread.sleep(forTimeInterval: 2.0)
-        switch consumed {
-        case .failure(.cancelled):
-          promise(.failure(.cancelled))
-        default:
-          XCTAssertTrue(false)
-        }
+      override func execute(with consumed: Consumed?) -> AnyPublisher<Int, Error> {
+        Future { (promise) in
+          DispatchQueue.global().asyncAfter(deadline: .now() + .seconds(2)) {
+            switch consumed {
+            case .failure(.cancelled):
+              promise(.failure(.cancelled))
+            default:
+              XCTAssertTrue(false)
+            }
+          }
+        }.eraseToAnyPublisher()
       }
     }
     

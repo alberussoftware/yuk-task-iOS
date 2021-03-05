@@ -5,16 +5,15 @@
 //  Created by Ruslan Lutfullin on 2/18/21.
 //
 
-import class Combine.Future
+import Combine
 
 // MARK: -
-@_fixed_layout
 @usableFromInline
 internal class _AnyConditionBox {
   @inlinable internal func dependency<O, F: Error>(for task: ProducerTask<O, F>) -> AnyProducerTask? {
     _abstract()
   }
-  @inlinable internal func evaluate<O, F: Error>(for task: ProducerTask<O, F>, with promise: @escaping Future<Void, Error>.Promise) {
+  @inlinable internal func evaluate<O, F: Error>(for task: ProducerTask<O, F>) -> AnyPublisher<Void, Error> {
     _abstract()
   }
   
@@ -22,7 +21,6 @@ internal class _AnyConditionBox {
 }
 
 // MARK: -
-@_fixed_layout
 @usableFromInline
 internal final class _ConditionBox<BaseCondition: Condition>: _AnyConditionBox {
   @usableFromInline internal var baseCondition: BaseCondition
@@ -30,15 +28,8 @@ internal final class _ConditionBox<BaseCondition: Condition>: _AnyConditionBox {
   @inlinable override internal func dependency<O, F: Error>(for task: ProducerTask<O, F>) -> AnyProducerTask? {
     baseCondition.dependency(for: task)
   }
-  @inlinable override internal func evaluate<O, F: Error>(for task: ProducerTask<O, F>, with promise: @escaping Future<Void, Error>.Promise) {
-    baseCondition.evaluate(for: task) { (result) in
-      switch result {
-      case .success:
-        promise(.success)
-      case let .failure(error):
-        promise(.failure(error))
-      }
-    }
+  @inlinable override internal func evaluate<O, F: Error>(for task: ProducerTask<O, F>) -> AnyPublisher<Void, Error> {
+    baseCondition.evaluate(for: task).mapError { $0 as Error }.eraseToAnyPublisher()
   }
   
   @inlinable internal init(_ condition: BaseCondition) {
@@ -57,8 +48,8 @@ extension Conditions {
     @inlinable public func dependency<O, F: Error>(for task: ProducerTask<O, F>) -> AnyProducerTask? {
       _box.dependency(for: task)
     }
-    @inlinable public func evaluate<O, F: Error>(for task: ProducerTask<O, F>, with promise: @escaping Promise) {
-      _box.evaluate(for: task, with: promise)
+    @inlinable public func evaluate<O, F: Error>(for task: ProducerTask<O, F>) -> AnyPublisher<Void, Error> {
+      _box.evaluate(for: task)
     }
     
     @inlinable public init<BaseCondition: Condition>(_ condition: BaseCondition) {

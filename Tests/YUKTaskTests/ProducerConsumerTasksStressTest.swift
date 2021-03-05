@@ -6,9 +6,8 @@
 //
 
 import XCTest
+import Combine
 @testable import YUKTask
-
-import class Combine.AnyCancellable
 
 // MARK: -
 final class ProducerConsumerTasksStressTest: XCTestCase {
@@ -16,7 +15,7 @@ final class ProducerConsumerTasksStressTest: XCTestCase {
     var count = 0
     let group = DispatchGroup()
     var cancellables = Set<AnyCancellable>()
-    
+
     (0..<1_000).forEach { (i) in
       group.enter()
       let task1 = TestTask1().name("\(i)-1")
@@ -32,18 +31,18 @@ final class ProducerConsumerTasksStressTest: XCTestCase {
           group.leave()
         }
         .store(in: &cancellables)
-      
+
       Self.taskQueue.add(task1)
       Self.taskQueue.add(task2)
       Self.taskQueue.add(task3)
       Self.taskQueue.add(task4)
       Self.taskQueue.add(task5)
     }
-    
+
     _ = group.wait(timeout: .distantFuture)
     XCTAssert(count == 5_000)
   }
-  
+
   static var allTests = [
     ("test", test),
   ]
@@ -51,13 +50,13 @@ final class ProducerConsumerTasksStressTest: XCTestCase {
 
 extension ProducerConsumerTasksStressTest {
   private final class TestTask1: NonFailProducerTask<Int> {
-    override func execute(with promise: @escaping Promise) {
-      promise(.success(1))
+    override func execute() -> AnyPublisher<Int, Never> {
+      Result.Publisher(.success(1)).eraseToAnyPublisher()
     }
   }
   private final class TestTask2: NonFailConsumerProducerTask<Int, Int> {
-    override func execute(with consumed: Consumed?, and promise: @escaping Promise) {
-      promise(consumed!.map { $0 + 1 })
+    override func execute(with consumed: Consumed?) -> AnyPublisher<Int, Never> {
+      Result.Publisher(consumed!.map { $0 + 1 }).eraseToAnyPublisher()
     }
   }
 }

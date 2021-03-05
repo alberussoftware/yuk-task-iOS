@@ -5,19 +5,16 @@
 //  Created by Ruslan Lutfullin on 2/14/21.
 //
 
-import class Combine.Future
-import struct Combine.Published
-import class Combine.AnyCancellable
+import Combine
 
 // MARK: -
-@_fixed_layout
 @usableFromInline
 internal class _AnyProducerTaskBox {
   internal var _operation: _AsyncOperation {
     _abstract()
   }
   //
-  internal var _promise: Combine.Future<Any, Error>.Promise {
+  @inlinable internal var _promise: Future<Any, Error>.Promise {
     _abstract()
   }
   
@@ -45,14 +42,14 @@ internal class _AnyProducerTaskBox {
     _abstract()
   }
   //
-  @inlinable internal var publisher: Combine.Future<Any, Error> {
+  @inlinable internal var publisher: AnyPublisher<Any, Error> {
     _abstract()
   }
 
-  @inlinable internal func execute(with promise: @escaping Combine.Future<Any, Error>.Promise) {
+  @inlinable internal func execute() -> AnyPublisher<Any, Error> {
     _abstract()
   }
-  @inlinable internal func finishing(with produced: Result<Any, Error>) {
+  @inlinable internal func finishing(with produced: Result<Any, Error>) -> AnyPublisher<Void, Never> {
     _abstract()
   }
   @inlinable internal func finished(with produced: Result<Any, Error>) {
@@ -63,11 +60,11 @@ internal class _AnyProducerTaskBox {
     _abstract()
   }
   //
-  @inlinable internal func produce<O, F: Error>(new task: ProducerTask<O, F>) {
+  @inlinable @discardableResult internal func produce<O, F: Error>(new task: ProducerTask<O, F>) -> AnyPublisher<O, F> {
     _abstract()
   }
   //
-  @inlinable @discardableResult internal func add<C: Condition>(condition: C) -> C.Future {
+  @inlinable @discardableResult internal func add<C: Condition>(condition: C) -> AnyPublisher<Void, C.Failure> {
     _abstract()
   }
   @inlinable internal func add<O: Observer>(observer: O) {
@@ -90,20 +87,16 @@ internal class _AnyProducerTaskBox {
 }
 
 // MARK: -
-@_fixed_layout
 @usableFromInline
 internal final class _ProducerTaskBox<Output, Failure: Error>: _AnyProducerTaskBox {
-  private var __publisher: Combine.Future<Any, Error>!
-  private var __promise: Future<Any, Error>.Promise!
-  private var __cancellable: AnyCancellable?
-  
   @usableFromInline internal var _base: ProducerTask<Output, Failure>
   
   internal override var _operation: _AsyncOperation {
     _base._operation
   }
   //
-  internal override var _promise: Future<Any, Error>.Promise {
+  @usableFromInline internal var __promise: Future<Any, Error>.Promise!
+  @inlinable internal override var _promise: Future<Any, Error>.Promise {
     __promise
   }
   
@@ -132,29 +125,29 @@ internal final class _ProducerTaskBox<Output, Failure: Error>: _AnyProducerTaskB
     _base.produced?.map { $0 as Any }.mapError { $0 as Error }
   }
   //
-  internal override var publisher: Combine.Future<Any, Error> {
-    __publisher
+  internal override var publisher: AnyPublisher<Any, Error> {
+    _base.publisher.map { $0 as Any }.mapError { $0 as Error }.eraseToAnyPublisher()
   }
   
-  internal override func execute(with promise: @escaping Combine.Future<Any, Error>.Promise) {
-    _base.execute(with: _base._promise)
+  internal override func execute() -> AnyPublisher<Any, Error> {
+    _base.execute().map { $0 as Any }.mapError { $0 as Error }.eraseToAnyPublisher()
   }
-  @inlinable internal override func finishing(with produced: Result<Any, Error>) {
-    _base.finishing(with: _base.produced!.map { $0 as Output }.mapError { $0 as Failure })
+  @inlinable internal override func finishing(with produced: Result<Any, Error>) -> AnyPublisher<Void, Never> {
+    _base.finishing(with: produced.map { $0 as! Output }.mapError { $0 as! Failure })
   }
   @inlinable internal override func finished(with produced: Result<Any, Error>) {
-    _base.finished(with: _base.produced!.map { $0 as Output }.mapError { $0 as Failure })
+    _base.finished(with: produced.map { $0 as! Output }.mapError { $0 as! Failure })
   }
   //
   @inlinable internal override func cancel() {
     _base.cancel()
   }
   //
-  @inlinable internal override func produce<O, F: Error>(new task: ProducerTask<O, F>) {
+  @inlinable @discardableResult internal override func produce<O, F: Error>(new task: ProducerTask<O, F>) -> AnyPublisher<O, F> {
     _base.produce(new: task)
   }
   //
-  @inlinable @discardableResult internal override func add<C: Condition>(condition: C) -> C.Future {
+  @inlinable @discardableResult internal override func add<C: Condition>(condition: C) -> AnyPublisher<Void, C.Failure> {
     _base.add(condition: condition)
   }
   @inlinable internal override func add<O: Observer>(observer: O) {
@@ -179,22 +172,8 @@ internal final class _ProducerTaskBox<Output, Failure: Error>: _AnyProducerTaskB
 
   internal init(_base: ProducerTask<Output, Failure>) {
     self._base = _base
+    __promise = { _base._promise($0.map { $0 as! Output }.mapError { $0 as! Failure }) }
     super.init()
-    
-    __publisher = .init { [weak self] (promise) in self?.__promise = promise }
-    
-    __cancellable = _base
-      .publisher
-      .sink { [weak self] in
-        switch $0 {
-        case let .failure(error):
-          self?.__promise(.failure(error))
-        default:
-          break
-        }
-      } receiveValue: { [weak self] in
-        self?.__promise(.success($0))
-      }
   }
   @inlinable deinit { }
 }
@@ -208,31 +187,31 @@ public final class AnyProducerTask: ProducerTask<Any, Error> {
     _box._operation
   }
   //
-  internal override var _promise: Promise {
+  internal override var _promise: Future<Any, Error>.Promise {
     _box._promise
   }
   
-  public override var id: ObjectIdentifier {
+  @inlinable public override var id: ObjectIdentifier {
     _id
   }
   //
-  public override var name: String? {
+  @inlinable public override var name: String? {
     _box.name
   }
-  public override var qualityOfService: QualityOfService {
+  @inlinable public override var qualityOfService: QualityOfService {
     _box.qualityOfService
   }
-  public override var queuePriority: QueuePriority {
+  @inlinable public override var queuePriority: QueuePriority {
     _box.queuePriority
   }
   //
-  public override var isExecuting: Bool {
+  @inlinable public override var isExecuting: Bool {
     _box.isExecuting
   }
-  public override var isFinished: Bool  {
+  @inlinable public override var isFinished: Bool  {
     _box.isFinished
   }
-  public override var isCancelled: Bool {
+  @inlinable public override var isCancelled: Bool {
     _box.isCancelled
   }
   //
@@ -240,14 +219,14 @@ public final class AnyProducerTask: ProducerTask<Any, Error> {
     _box.produced
   }
   //
-  @inlinable public override var publisher: Future {
+  @inlinable public override var publisher: AnyPublisher<Any, Error> {
     _box.publisher
   }
   
-  @inlinable public override func execute(with promise: @escaping Promise) {
-    _box.execute(with: promise)
+  @inlinable public override func execute() -> AnyPublisher<Any, Error> {
+    _box.execute()
   }
-  @inlinable public override func finishing(with produced: Produced) {
+  @inlinable public override func finishing(with produced: Produced) -> AnyPublisher<Void, Never> {
     _box.finishing(with: produced)
   }
   @inlinable public override func finished(with produced: Produced) {
@@ -258,11 +237,11 @@ public final class AnyProducerTask: ProducerTask<Any, Error> {
     _box.cancel()
   }
   //
-  @inlinable public override func produce<O, F: Error>(new task: ProducerTask<O, F>) {
+  @inlinable @discardableResult public override func produce<O, F: Error>(new task: ProducerTask<O, F>) -> AnyPublisher<O, F> {
     _box.produce(new: task)
   }
   //
-  @inlinable @discardableResult public override func add<C: Condition>(condition: C) -> C.Future {
+  @inlinable @discardableResult public override func add<C: Condition>(condition: C) -> AnyPublisher<Void, C.Failure> {
     _box.add(condition: condition)
   }
   @inlinable public override func add<O: Observer>(observer: O) {

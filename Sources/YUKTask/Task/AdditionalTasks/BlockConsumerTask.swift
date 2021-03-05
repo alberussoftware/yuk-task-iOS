@@ -5,17 +5,19 @@
 //  Created by Ruslan Lutfullin on 1/12/20.
 //
 
+import struct Combine.AnyPublisher
+
 // MARK: -
 public final class BlockConsumerProducerTask<Input, Output, Failure: Error>: ConsumerProducerTask<Input, Output, Failure> {
   // MARK: Private Props
   private let block: Block
   
   // MARK: Private Typealias
-  public typealias Block = (_ self: BlockConsumerProducerTask, _ consumed: Consumed?, _ promise: @escaping Promise) -> Void
+  public typealias Block = (_ self: BlockConsumerProducerTask, _ consumed: Consumed?) -> AnyPublisher<Output, Failure>
   
   // MARK: Public Methods
-  public override func execute(with consumed: Consumed?, and promise: @escaping Promise) {
-    block(self, consumed, promise)
+  public override func execute(with consumed: Consumed?) -> AnyPublisher<Output, Failure> {
+    block(self, consumed)
   }
   
   // MARK: Public Inits

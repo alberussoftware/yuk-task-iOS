@@ -6,43 +6,50 @@
 //
 
 import XCTest
+import Combine
 @testable import YUKTask
 
-import class Combine.AnyCancellable
 
 // MARk: -
 final class GroupConsumerProducerTaskTests: XCTestCase {
   func test() {
     var cancellables = [AnyCancellable]()
     let expectation1 = XCTestExpectation()
-    let producing = BlockProducerTask<Int, Error> { (_, promise) in
-      DispatchQueue.global().asyncAfter(deadline: .now() + .seconds(2)) {
-        expectation1.fulfill()
-        promise(.success(21))
-      }
+    let producing = BlockProducerTask<Int, Error> { (_) in
+      Future { (promise) in
+        DispatchQueue.global().asyncAfter(deadline: .now() + .seconds(2)) {
+          expectation1.fulfill()
+          promise(.success(21))
+        }
+      }.eraseToAnyPublisher()
     }
     let expectation2 = XCTestExpectation()
-    let task2 = BlockConsumerProducerTask<Int,Int, Error>(producing: producing) { (_, consumed, promise) in
-      guard let consumed = consumed else {
-        promise(.failure(.cancelled))
-        return
-      }
-      DispatchQueue.global().asyncAfter(deadline: .now() + .seconds(2)) {
-        expectation2.fulfill()
-        promise(consumed.map { $0 * 2})
-      }
+    let task2 = BlockConsumerProducerTask<Int,Int, Error>(producing: producing) { (_, consumed) in
+      Future { (promise) in
+        guard let consumed = consumed else {
+          promise(.failure(.cancelled))
+          return
+        }
+        
+        DispatchQueue.global().asyncAfter(deadline: .now() + .seconds(2)) {
+          expectation2.fulfill()
+          promise(consumed.map { $0 * 2})
+        }
+      }.eraseToAnyPublisher()
     }
     let expectation3 = XCTestExpectation()
-    let producer = BlockConsumerProducerTask<Int, Int, Error>(producing: task2) { (_, consumed, promise) in
-      guard let consumed = consumed else {
-        promise(.failure(.cancelled))
-        return
-      }
-      dispatchPrecondition(condition: .onQueue(Self.workDispatchQueue))
-      DispatchQueue.global().asyncAfter(deadline: .now() + .seconds(2)) {
-        expectation3.fulfill()
-        promise(consumed.map { $0 * 2})
-      }
+    let producer = BlockConsumerProducerTask<Int, Int, Error>(producing: task2) { (_, consumed) in
+      Future { (promise) in
+        guard let consumed = consumed else {
+          promise(.failure(.cancelled))
+          return
+        }
+        dispatchPrecondition(condition: .onQueue(Self.workDispatchQueue))
+        DispatchQueue.global().asyncAfter(deadline: .now() + .seconds(2)) {
+          expectation3.fulfill()
+          promise(consumed.map { $0 * 2})
+        }
+      }.eraseToAnyPublisher()
     }
     let expectation4 = XCTestExpectation()
     let groupTask = GroupConsumerProducerTask<Int, Int, Error>(producing: producing, { task2 }, producer: producer)
