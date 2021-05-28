@@ -1,6 +1,0 @@
-use_frameworks!
-target 'YUKTask_Tests' do
-  pod 'YUKTask', :path => '../'
-  
-  
-end
