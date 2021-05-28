@@ -9,10 +9,13 @@ import XCTest
 import Combine
 @testable import YUKTask
 
-
-// MARk: -
-final class GroupConsumerProducerTaskTests: XCTestCase {
-  func test() {
+// MARK: -
+internal final class GroupConsumerProducerTaskTests: XCTestCase {
+  // MARK: Internal Static Props
+  internal static var allTests = [("test", test)]
+  
+  // MARK: Internal Methods
+  internal func test() {
     var cancellables = [AnyCancellable]()
     let expectation1 = XCTestExpectation()
     let producing = BlockProducerTask<Int, Error> { (_) in
@@ -73,8 +76,4 @@ final class GroupConsumerProducerTaskTests: XCTestCase {
     
     wait(for: [expectation1, expectation2, expectation3, expectation4], timeout: 7.0, enforceOrder: true)
   }
-  
-  static var allTests = [
-    ("test", test),
-  ]
 }

@@ -5,7 +5,7 @@
 //  Created by Ruslan Lutfullin on 2/11/21.
 //
 
-@_functionBuilder
+@resultBuilder
 public struct AnyProducerTaskArrayBuilder {
   public static func buildBlock<O0, F0: Error>(_ t0: ProducerTask<O0, F0>) -> [AnyProducerTask] {
     [.init(t0)]

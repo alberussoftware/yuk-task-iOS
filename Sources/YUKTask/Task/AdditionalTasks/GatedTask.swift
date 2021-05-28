@@ -5,34 +5,35 @@
 //  Created by Ruslan Lutfullin on 2/2/20.
 //
 
+import Foundation
 import Combine
-import class Foundation.Operation
 
 // MARK: -
 public final class GatedTask: NonFailTask {
   // MARK: Private Props
-  private let operation: Operation
+  private let gatedOperation: Operation
   
   // MARK: Public Methods
   public override func execute() -> AnyPublisher<Void, Never> {
-    guard !isCancelled else { return Just(()).eraseToAnyPublisher() }
+    guard !isCancelled else { return Result.Publisher(.success).eraseToAnyPublisher() }
     
-    operation.start()
-    return operation
+    gatedOperation.start()
+    
+    return gatedOperation
       .publisher(for: \.isFinished, options: [.initial, .new])
       .filter { $0 }
-      .flatMap { (_) in Just(()) }
+      .flatMap { (_) in Result.Publisher(.success).eraseToAnyPublisher() }
       .eraseToAnyPublisher()
   }
   //
   public override func cancel() {
-    operation.cancel()
+    gatedOperation.cancel()
     super.cancel()
   }
   
   // MARK: Public Inits
-  public init(operation: Operation) {
-    self.operation = operation
+  public init(_ operation: Operation) {
+    gatedOperation = operation
     super.init()
   }
 }

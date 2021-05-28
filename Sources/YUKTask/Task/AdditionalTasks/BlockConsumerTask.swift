@@ -5,7 +5,7 @@
 //  Created by Ruslan Lutfullin on 1/12/20.
 //
 
-import struct Combine.AnyPublisher
+import Combine
 
 // MARK: -
 public final class BlockConsumerProducerTask<Input, Output, Failure: Error>: ConsumerProducerTask<Input, Output, Failure> {

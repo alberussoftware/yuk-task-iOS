@@ -5,7 +5,7 @@
 //  Created by Ruslan Lutfullin on 1/4/20.
 //
 
-import struct Combine.AnyPublisher
+import Combine
 
 // MARK: -
 open class ConsumerProducerTask<Input, Output, Failure: Error>: ProducerTask<Output, Failure> {

@@ -16,11 +16,11 @@ extension Conditions {
       nil
     }
     public func evaluate<O, F: Swift.Error>(for task: ProducerTask<O, F>) -> AnyPublisher<Void, Failure> {
-      task._operation
+      task.operation
         .dependencies
         .allSatisfy { !$0.isCancelled }
-        ? Just(()).setFailureType(to: Failure.self).eraseToAnyPublisher()
-        : Fail(error: .haveCancelledFailure).eraseToAnyPublisher()
+        ? Result.Publisher(.success).eraseToAnyPublisher()
+        : Result.Publisher(.failure(.haveCancelledFailure)).eraseToAnyPublisher()
     }
   }
 }

@@ -5,7 +5,7 @@
 //  Created by Ruslan Lutfullin on 2/20/21.
 //
 
-import enum Foundation.QualityOfService
+import Foundation
 
 // MARK: -
 public enum QualityOfService {

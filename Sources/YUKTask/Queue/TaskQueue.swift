@@ -5,82 +5,94 @@
 //  Created by Ruslan Lutfullin on 1/3/20.
 //
 
-import struct Combine.AnyPublisher
-import class Foundation.OperationQueue
-import class Dispatch.DispatchQueue
-import class YUKLock.UnfairLocked
+import Combine
+import Foundation
+import YUKLock
 
 // MARK: -
 public final class TaskQueue {
-  // MARK: Internal Props
-  internal let _operationQueue: OperationQueue
-  //
-	@UnfairLocked
-  internal var _tasks = [AnyHashable: AnyObject]()
-  
   // MARK: Public Static Props
-  public static let main = TaskQueue(operationQueue: OperationQueue.main)
+  public static let main = TaskQueue(operationQueue: .main)
   //
   public static var defaultMaxConcurrentTaskCount: Int { OperationQueue.defaultMaxConcurrentOperationCount }
   
-  // MARK: Public Props
-  public var name: String? { _operationQueue.name }
-  public var qualityOfService: QualityOfService { .init(_operationQueue.qualityOfService) }
-  public var maxConcurrentTasks: Int { _operationQueue.maxConcurrentOperationCount }
-  public var underlyingQueue: DispatchQueue? { _operationQueue.underlyingQueue }
-  public var isSuspended: Bool { _operationQueue.isSuspended }
+  // MARK: Internal Props
+  internal let operationQueue: OperationQueue
+  //
+  @UnfairLocked internal var tasks = [AnyHashable: AnyObject]()
   
-  // MARK: Public Funcs
-  @discardableResult
-  public func add<O, F: Error>(_ task: ProducerTask<O, F>) -> AnyPublisher<O, F> {
-    if let taskQueueContainable = task as? _TaskQueueContainable { taskQueueContainable._taskQueue._operationQueue.underlyingQueue = underlyingQueue }
-    _tasks[task.id] = task
-    task.add(observer: _TaskQueueObserver(taskQueue: self))
-    task._operation.willEnqueue()
-    _operationQueue.addOperation(task._operation)
+  // MARK: Public Props
+  public var name: String? { operationQueue.name }
+  public var qualityOfService: QualityOfService { .init(operationQueue.qualityOfService) }
+  public var maxConcurrentTasks: Int { operationQueue.maxConcurrentOperationCount }
+  public var underlyingQueue: DispatchQueue? { operationQueue.underlyingQueue }
+  public var isSuspended: Bool { operationQueue.isSuspended }
+  
+  // MARK: Public Methods
+  @discardableResult public func add<O, F: Error>(_ task: ProducerTask<O, F>) -> AnyPublisher<O, F> {
+    if let taskQueueContainable = task as? TaskQueueContainable { taskQueueContainable.taskQueue.operationQueue.underlyingQueue = underlyingQueue }
+    task.add(observer: TaskObserver(taskQueue: self))
+    task.operation.willEnqueue()
+    
+    tasks[task.id] = task
+    
+    operationQueue.addOperation(task.operation)
+    
     return task.publisher
   }
   //
   public func cancelAllTasks() {
-    _operationQueue.cancelAllOperations()
+    operationQueue.cancelAllOperations()
   }
   public func waitUntilAllTasksAreFinished() {
-    _operationQueue.waitUntilAllOperationsAreFinished()
+    operationQueue.waitUntilAllOperationsAreFinished()
   }
   //
-  @discardableResult
-  public func name(_ string: String) -> Self {
-    _operationQueue.name = string
+  @discardableResult public func name(_ string: String) -> Self {
+    operationQueue.name = string
     return self
   }
-  @discardableResult
-  public func qualityOfService(_ qos: QualityOfService) -> Self {
-    _operationQueue.qualityOfService = qos._underline
+  @discardableResult public func qualityOfService(_ qos: QualityOfService) -> Self {
+    operationQueue.qualityOfService = qos._underline
     return self
   }
-  @discardableResult
-  public func maxConcurrentTasks(_ count: Int) -> Self {
-    _operationQueue.maxConcurrentOperationCount = count
+  @discardableResult public func maxConcurrentTasks(_ count: Int) -> Self {
+    operationQueue.maxConcurrentOperationCount = count
     return self
   }
-  @discardableResult
-  public func underlyingQueue(_ queue: DispatchQueue) -> Self {
-    _operationQueue.underlyingQueue = queue
+  @discardableResult public func underlyingQueue(_ queue: DispatchQueue) -> Self {
+    operationQueue.underlyingQueue = queue
     return self
   }
-  @discardableResult
-  public func isSuspended(_ suspended: Bool) -> Self {
-    _operationQueue.isSuspended = suspended
+  @discardableResult public func isSuspended(_ suspended: Bool) -> Self {
+    operationQueue.isSuspended = suspended
     return self
   }
   
   // MARK: Private Inits
   private init(operationQueue: OperationQueue) {
-    _operationQueue = operationQueue
+    self.operationQueue = operationQueue
   }
   
   // MARK: Public Inits
   public init() {
-    _operationQueue = .init()
+    operationQueue = .init()
+  }
+}
+
+extension TaskQueue {
+  private struct TaskObserver: Observer {
+    private weak var taskQueue: TaskQueue?
+    
+    internal func task<O1, F1: Error, O2, F2: Error>(_ task: ProducerTask<O1, F1>, didProduce newTask: ProducerTask<O2, F2>) {
+      taskQueue?.add(newTask)
+    }
+    internal func taskDidFinish<O, F: Error>(_ task: ProducerTask<O, F>) {
+      taskQueue?.tasks[task.id] = nil
+    }
+    
+    internal init(taskQueue: TaskQueue) {
+      self.taskQueue = taskQueue
+    }
   }
 }

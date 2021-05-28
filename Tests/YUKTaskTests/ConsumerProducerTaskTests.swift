@@ -10,8 +10,13 @@ import Combine
 @testable import YUKTask
 
 // MARK: -
-final class ConsumerProducerTaskTests: XCTestCase {
-  func testExecute() {
+internal final class ConsumerProducerTaskTests: XCTestCase {
+  // MARK: Internal Static Props
+  internal static var allTests = [("testExecute", testExecute),
+                         ("testProducingCancellation", testProducingCancellation)]
+  
+  // MARK: Internal Methods
+  internal func testExecute() {
     final class ProducingTestTask: ProducerTask<Int, Error> {
       override func execute() -> AnyPublisher<Int, Error> {
         Future { (promise) in
@@ -61,7 +66,7 @@ final class ConsumerProducerTaskTests: XCTestCase {
     
     wait(for: [expectation], timeout: 5.0)
   }
-  func testProducingCancellation() {
+  internal func testProducingCancellation() {
     final class ProducingTestTask: ProducerTask<Int, Error> {
       override func execute() -> AnyPublisher<Int, Error> {
         Future { (promise) in
@@ -118,10 +123,5 @@ final class ConsumerProducerTaskTests: XCTestCase {
     
     wait(for: [expectation], timeout: 5.0)
   }
-  
-  static var allTests = [
-    ("testExecute", testExecute),
-    ("testProducingCancellation", testProducingCancellation),
-  ]
 }
 

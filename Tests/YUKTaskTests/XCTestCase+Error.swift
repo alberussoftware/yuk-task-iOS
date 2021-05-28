@@ -5,11 +5,11 @@
 //  Created by Ruslan Lutfullin on 2/16/21.
 //
 
-import class XCTest.XCTestCase
+import XCTest
 
 // MARK: -
 extension XCTestCase {
-  enum Error: Swift.Error {
+  internal enum Error: Swift.Error {
     case cancelled
     case oops
   }

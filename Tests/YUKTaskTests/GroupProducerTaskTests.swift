@@ -7,9 +7,8 @@
 
 import XCTest
 import Combine
+import CoreLocation
 @testable import YUKTask
-
-import struct CoreLocation.CLLocationCoordinate2D
 
 // MARK: -
 final class GroupProducerTaskTests: XCTestCase {

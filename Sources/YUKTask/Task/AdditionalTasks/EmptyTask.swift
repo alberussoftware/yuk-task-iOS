@@ -10,6 +10,6 @@ import Combine
 // MARK: -
 public final class EmptyTask: NonFailTask {
   public override func execute() -> AnyPublisher<Void, Never> {
-    Just(()).eraseToAnyPublisher()
+    Result.Publisher(.success).eraseToAnyPublisher()
   }
 }

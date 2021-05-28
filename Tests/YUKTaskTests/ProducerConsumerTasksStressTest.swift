@@ -10,8 +10,14 @@ import Combine
 @testable import YUKTask
 
 // MARK: -
-final class ProducerConsumerTasksStressTest: XCTestCase {
-  func test() {
+internal final class ProducerConsumerTasksStressTest: XCTestCase {
+  // MARK: Internal Static Props
+  internal static var allTests = [
+    ("test", test),
+  ]
+  
+  // MARK: Internal Methods
+  internal func test() {
     var count = 0
     let group = DispatchGroup()
     var cancellables = Set<AnyCancellable>()
@@ -42,10 +48,6 @@ final class ProducerConsumerTasksStressTest: XCTestCase {
     _ = group.wait(timeout: .distantFuture)
     XCTAssert(count == 5_000)
   }
-
-  static var allTests = [
-    ("test", test),
-  ]
 }
 
 extension ProducerConsumerTasksStressTest {

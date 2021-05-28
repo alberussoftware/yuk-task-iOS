@@ -18,11 +18,10 @@ extension Conditions {
       baseCondition.dependency(for: task)
     }
     public func evaluate<O, F: Swift.Error>(for task: ProducerTask<O, F>) -> AnyPublisher<Void, Failure> {
-      baseCondition
-        .evaluate(for: task)
-        .catch { (_) in Just(()) }
+      baseCondition.evaluate(for: task)
+        .catch { (_) in Result.Publisher(.success).eraseToAnyPublisher() }
         .setFailureType(to: Failure.self)
-        .flatMap { (_) in Fail<Void, Failure>(error: .reverseFailure) }
+        .flatMap { (_) in Result.Publisher(.failure(.reverseFailure)).eraseToAnyPublisher() }
         .eraseToAnyPublisher()
     }
     

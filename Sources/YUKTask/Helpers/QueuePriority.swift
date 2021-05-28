@@ -5,7 +5,7 @@
 //  Created by Ruslan Lutfullin on 2/20/21.
 //
 
-import class Foundation.Operation
+import Foundation
 
 // MARK: -
 public enum QueuePriority {

@@ -9,7 +9,7 @@ import Combine
 
 // MARK: -
 @usableFromInline
-internal class _AnyConditionBox {
+internal class AnyConditionBox {
   @inlinable internal func dependency<O, F: Error>(for task: ProducerTask<O, F>) -> AnyProducerTask? {
     _abstract()
   }
@@ -22,7 +22,7 @@ internal class _AnyConditionBox {
 
 // MARK: -
 @usableFromInline
-internal final class _ConditionBox<BaseCondition: Condition>: _AnyConditionBox {
+internal final class ConditionBox<BaseCondition: Condition>: AnyConditionBox {
   @usableFromInline internal var baseCondition: BaseCondition
   
   @inlinable override internal func dependency<O, F: Error>(for task: ProducerTask<O, F>) -> AnyProducerTask? {
@@ -43,7 +43,7 @@ extension Conditions {
   public struct AnyCondition: Condition {
     public typealias Failure = Error
     
-    @usableFromInline internal let _box: _AnyConditionBox
+    @usableFromInline internal let _box: AnyConditionBox
     
     @inlinable public func dependency<O, F: Error>(for task: ProducerTask<O, F>) -> AnyProducerTask? {
       _box.dependency(for: task)
@@ -53,7 +53,7 @@ extension Conditions {
     }
     
     @inlinable public init<BaseCondition: Condition>(_ condition: BaseCondition) {
-      _box = _ConditionBox(condition)
+      _box = ConditionBox(condition)
     }
   }
 }

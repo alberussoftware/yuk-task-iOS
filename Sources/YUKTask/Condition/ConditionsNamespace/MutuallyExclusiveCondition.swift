@@ -16,7 +16,7 @@ extension Conditions {
       nil
     }
     public func evaluate<O, F: Error>(for task: ProducerTask<O, F>) -> AnyPublisher<Void, Failure> {
-      Just(()).eraseToAnyPublisher()
+      Result.Publisher(.success).eraseToAnyPublisher()
     }
   }
 }

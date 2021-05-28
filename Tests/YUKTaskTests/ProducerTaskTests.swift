@@ -9,11 +9,28 @@ import XCTest
 import Combine
 @testable import YUKTask
 
-import class Combine.AnyCancellable
-
 // MARK: -
-final class ProducerTaskTests: XCTestCase {
-  func testName() {
+internal final class ProducerTaskTests: XCTestCase {
+  // MARK: Internal Static Props
+  internal static var allTests = [("testName", testName),
+                                  ("testQualityOfService", testQualityOfService),
+                                  ("testQueuePriority", testQueuePriority),
+                                  
+                                  ("testProduced", testProduced),
+                                  
+                                  ("testPublisher", testPublisher),
+                                  
+                                  ("testFinishes", testFinishes),
+                                  ("testCancellation", testCancellation),
+                                  ("testProduce", testProduce),
+                                  
+                                  ("testAddObserver", testAddObserver),
+                                  ("testAddCondition", testAddCondition),
+                                  
+                                  ("testQueues", testQueues)]
+  
+  // MARK: Internal Methods
+  internal func testName() {
     final class TestTask: ProducerTask<Int, Error> {
       override func execute() -> AnyPublisher<Int, Error> {
         Result.Publisher(.success(21)).eraseToAnyPublisher()
@@ -26,7 +43,7 @@ final class ProducerTaskTests: XCTestCase {
     Self.taskQueue.waitUntilAllTasksAreFinished()
     XCTAssert(task.name == #function)
   }
-  func testQualityOfService() {
+  internal func testQualityOfService() {
     final class TestTask: ProducerTask<Int, Error> {
       override func execute() -> AnyPublisher<Int, Error> {
         Result.Publisher(.success(21)).eraseToAnyPublisher()
@@ -39,7 +56,7 @@ final class ProducerTaskTests: XCTestCase {
     Self.taskQueue.waitUntilAllTasksAreFinished()
     XCTAssert(task.qualityOfService == .utility)
   }
-  func testQueuePriority() {
+  internal func testQueuePriority() {
     final class TestTask: ProducerTask<Int, Error> {
       override func execute() -> AnyPublisher<Int, Error> {
         Result.Publisher(.success(21)).eraseToAnyPublisher()
@@ -53,7 +70,7 @@ final class ProducerTaskTests: XCTestCase {
     XCTAssert(task.queuePriority == .low)
   }
   //
-  func testProduced() {
+  internal func testProduced() {
     final class SuccessTestTask: ProducerTask<Int, Error> {
       override func execute() -> AnyPublisher<Int, Error> {
         Result.Publisher(.success(21)).eraseToAnyPublisher()
@@ -78,7 +95,7 @@ final class ProducerTaskTests: XCTestCase {
     }
   }
   //
-  func testPublisher() {
+  internal func testPublisher() {
     final class TestTask: ProducerTask<Int, Error> {
       override func execute() -> AnyPublisher<Int, Error> {
         Future { (promise) in
@@ -112,7 +129,7 @@ final class ProducerTaskTests: XCTestCase {
     wait(for: [expectation1, expectation2], timeout: 3.0, enforceOrder: true)
   }
   //
-  func testFinishes() {
+  internal func testFinishes() {
     final class TestTask: ProducerTask<Int, Error> {
       override func execute() -> AnyPublisher<Int, Error> {
         Future { (promise) in
@@ -159,7 +176,7 @@ final class ProducerTaskTests: XCTestCase {
     
     wait(for: [expectation1, expectation2], timeout: 3.0, enforceOrder: true)
   }
-  func testCancellation() {
+  internal func testCancellation() {
     final class TestTask: ProducerTask<Int, Error> {
       override func execute() -> AnyPublisher<Int, Error> {
         guard !isCancelled else {
@@ -180,7 +197,7 @@ final class ProducerTaskTests: XCTestCase {
       XCTAssertTrue(false)
     }
   }
-  func testProduce() {
+  internal func testProduce() {
     final class ProduceTestTask: ProducerTask<Int, Error> {
       override func execute() -> AnyPublisher<Int, Error> {
         Future { (promise) in
@@ -216,7 +233,7 @@ final class ProducerTaskTests: XCTestCase {
     }
   }
   //
-  func testAddObserver() {
+  internal func testAddObserver() {
     final class TestTask: ProducerTask<Int, Error> {
       override func execute() -> AnyPublisher<Int, Error> {
         Future { (promise) in
@@ -268,7 +285,7 @@ final class ProducerTaskTests: XCTestCase {
     
     wait(for: [expectation1, expectation2, expectation3, expectation4], timeout: 3.0, enforceOrder: true)
   }
-  func testAddCondition() {
+  internal func testAddCondition() {
     final class TestTask: ProducerTask<Int, Error> {
       override func execute() -> AnyPublisher<Int, Error> {
         Future { (promise) in
@@ -300,7 +317,7 @@ final class ProducerTaskTests: XCTestCase {
         XCTAssertTrue(false)
       }
       .store(in: &cancellables)
-
+    
     task.add(dependency: dependencyTask)
     Self.taskQueue.add(dependencyTask)
     Self.taskQueue.add(task)
@@ -323,7 +340,7 @@ final class ProducerTaskTests: XCTestCase {
     wait(for: [expectation1, expectation2], timeout: 5.0, enforceOrder: true)
   }
   //
-  func testQueues() {
+  internal func testQueues() {
     final class TestTask: ProducerTask<Int, Error> {
       override func execute() -> AnyPublisher<Int, Error> {
         Future { (promise) in
@@ -364,21 +381,7 @@ final class ProducerTaskTests: XCTestCase {
       }
       .store(in: &cancellables)
     Self.taskQueue.add(task)
-
+    
     wait(for: [expectation], timeout: 3.0)
   }
-  
-  static var allTests = [
-    ("testName", testName),
-    ("testQualityOfService", testQualityOfService),
-    ("testQueuePriority", testQueuePriority),
-    ("testProduced", testProduced),
-    ("testPublisher", testPublisher),
-    ("testFinishes", testFinishes),
-    ("testCancellation", testCancellation),
-    ("testProduce", testProduce),
-    ("testAddObserver", testAddObserver),
-    ("testAddCondition", testAddCondition),
-    ("testQueues", testQueues),
-  ]
 }

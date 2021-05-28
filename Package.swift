@@ -1,4 +1,4 @@
-// swift-tools-version:5.3
+// swift-tools-version:5.4
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -13,10 +13,20 @@ let package = Package(
     .library(name: "YUKTask", targets: ["YUKTask"]),
   ],
   dependencies: [
-    .package(name: "YUKLock", url: "https://github.com/alberussoftware/yuk-lock-iOS",  .branch("master")),
+    .package(name: "YUKLock", url: "https://github.com/alberussoftware/yuk-lock-iOS.git", .branch("master")),
   ],
   targets: [
-    .target( name: "YUKTask", dependencies: ["YUKLock"], exclude: ["./Task/GroupTasks/AnyProducerTaskArrayBuilder.swift.gyb"]),
-    .testTarget(name: "YUKTaskTests", dependencies: ["YUKTask", "YUKLock"]),
+    .target(
+      name: "YUKTask",
+      dependencies: ["YUKLock"],
+      exclude: [
+        "./Deprecated",
+        "./Task/GroupTasks/AnyProducerTaskArrayBuilder.swift.gyb",
+      ]
+    ),
+    .testTarget(
+      name: "YUKTaskTests",
+      dependencies: ["YUKTask", "YUKLock"]
+    ),
   ]
 )
